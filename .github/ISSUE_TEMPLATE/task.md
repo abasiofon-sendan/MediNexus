@@ -1,3 +1,10 @@
+---
+name: Task
+about: Standard template for MediNexus development tasks.
+title: "[TASK]: "
+labels: task
+assignees: ''
+---
 ## Task Description
 Provide a clear and concise description of the task.
 
