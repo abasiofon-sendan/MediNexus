@@ -8,24 +8,53 @@ interface LoginRequest {
 }
 
 interface LoginResponse {
-	user: {
+	access: string;
+	refresh: string;
+	user?: {
 		id: string;
 		email: string;
-		name: string;
+		first_name: string;
+		last_name: string;
 		role: "patient" | "doctor";
-	};
-	tokens: {
-		access_token: string;
-		refresh_token: string;
 	};
 }
 
-interface RegisterRequest {
-	name: string;
+interface PatientRegisterRequest {
 	email: string;
 	password: string;
+	first_name: string;
+	last_name: string;
+	phone_number: string;
 	nin: string;
-	role: "patient" | "doctor";
+	date_of_birth: string;
+	blood_group?: string;
+	genotype?: string;
+	allergies?: string;
+	emergency_contact?: string;
+}
+
+interface DoctorRegisterRequest {
+	email: string;
+	password: string;
+	first_name: string;
+	last_name: string;
+	phone_number: string;
+	hospital_id: string;
+	license_number: string;
+	specialty: string;
+}
+
+interface OTPVerifyRequest {
+	email: string;
+	otp_code: string;
+}
+
+interface Hospital {
+	id: string;
+	name: string;
+	address: string;
+	city: string;
+	state: string;
 }
 
 // Auth Service Functions
@@ -35,8 +64,27 @@ export const authService = {
 		return response.data;
 	},
 
-	register: async (data: RegisterRequest): Promise<LoginResponse> => {
-		const response = await client.post(ENDPOINTS.AUTH.REGISTER, data);
+	patientRegister: async (
+		data: PatientRegisterRequest,
+	): Promise<{ message: string }> => {
+		const response = await client.post(ENDPOINTS.AUTH.PATIENT_REGISTER, data);
+		return response.data;
+	},
+
+	doctorRegister: async (
+		data: DoctorRegisterRequest,
+	): Promise<LoginResponse> => {
+		const response = await client.post(ENDPOINTS.AUTH.DOCTOR_REGISTER, data);
+		return response.data;
+	},
+
+	verifyOTP: async (data: OTPVerifyRequest): Promise<LoginResponse> => {
+		const response = await client.post(ENDPOINTS.AUTH.OTP_VERIFY, data);
+		return response.data;
+	},
+
+	resendOTP: async (email: string): Promise<{ message: string }> => {
+		const response = await client.post(ENDPOINTS.AUTH.OTP_RESEND, { email });
 		return response.data;
 	},
 
@@ -46,15 +94,16 @@ export const authService = {
 		localStorage.removeItem("refresh_token");
 	},
 
-	refreshToken: async (): Promise<{ access_token: string }> => {
+	refreshToken: async (): Promise<{ access: string }> => {
 		const refreshToken = localStorage.getItem("refresh_token");
 		const response = await client.post(ENDPOINTS.AUTH.REFRESH_TOKEN, {
-			refresh_token: refreshToken,
+			refresh: refreshToken,
 		});
 		return response.data;
 	},
-};
 
-// Example usage:
-// const loginResult = await authService.login({ email: 'user@example.com', password: 'password' });
-// const registerResult = await authService.register({ name: 'John', email: 'john@example.com', password: 'password', nin: '12345678901', role: 'patient' });
+	getHospitals: async (): Promise<Hospital[]> => {
+		const response = await client.get(ENDPOINTS.PROVIDERS.HOSPITALS);
+		return response.data;
+	},
+};
