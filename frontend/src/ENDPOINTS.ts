@@ -1,24 +1,23 @@
-import { ENV } from "./configs/env";
-
-// Environment-based base URLs
-const BASE_URLS = {
-	development: "http://localhost:3001/api",
-	production: "https://example.com/api",
-} as const;
-
-// Get the current environment's base URL
-export const API_BASE_URL =
-	BASE_URLS[ENV.app.env as keyof typeof BASE_URLS] || BASE_URLS.development;
+// API Base URL - using production endpoint
+export const API_BASE_URL = "https://medinexus-backend-59tf.onrender.com/api";
 
 export const AUTH_ENDPOINTS = {
-	LOGIN: "/auth/login",
-	REGISTER: "/auth/register",
-	LOGOUT: "/auth/logout",
-	REFRESH_TOKEN: "/auth/refresh",
+	LOGIN: "/auth/login/",
+	PATIENT_REGISTER: "/auth/patient/register/",
+	DOCTOR_REGISTER: "/providers/doctors/register/",
+	OTP_VERIFY: "/auth/otp/verify/",
+	OTP_RESEND: "/auth/otp/resend/",
+	LOGOUT: "/auth/logout/",
+	REFRESH_TOKEN: "/auth/refresh/",
+} as const;
+
+export const PROVIDER_ENDPOINTS = {
+	HOSPITALS: "/providers/hospitals/",
 } as const;
 
 export const ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
+	PROVIDERS: PROVIDER_ENDPOINTS,
 } as const;
 
 // Utility function to build full URL
