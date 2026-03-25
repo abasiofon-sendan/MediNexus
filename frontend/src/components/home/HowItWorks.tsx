@@ -3,7 +3,6 @@ import {
 	ListChecksIcon,
 	StethoscopeIcon,
 } from "@phosphor-icons/react";
-import { useAOS } from "#/hooks/useAOS";
 import { Card } from "../ui/card";
 
 const STEPS = [
@@ -27,11 +26,9 @@ const STEPS = [
 	},
 ];
 const HowItWorks = () => {
-	const { getAOSProps } = useAOS();
-
 	return (
 		<section className="py-18 md:py-28 mx-auto px-5 md:px-10 container">
-			<div className="text-center mb-16" {...getAOSProps("fade-up")}>
+			<div className="text-center mb-16">
 				<h2 className="font-plus-sans font-bold text-[32px] md:text-[42px] text-ink tracking-tight mb-4">
 					How it works
 				</h2>
@@ -41,12 +38,8 @@ const HowItWorks = () => {
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-				{STEPS.map((step, index) => (
-					<Card
-						key={step.step}
-						className="relative md:p-8"
-						{...getAOSProps("zoom-in", index * 150)}
-					>
+				{STEPS.map((step) => (
+					<Card key={step.step} className="relative md:p-8">
 						<span className="absolute text-primary-800/20  right-6 md:right-8 font-extrabold text-6xl font-plus-sans">
 							{step.step}
 						</span>

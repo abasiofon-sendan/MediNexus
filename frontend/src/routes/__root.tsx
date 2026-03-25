@@ -38,10 +38,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			},
 			{
 				rel: "stylesheet",
-				href: "https://unpkg.com/aos@2.3.1/dist/aos.css",
-			},
-			{
-				rel: "stylesheet",
 				href: "https://fonts.googleapis.com/css2?family=plus+jakarta+sans:wght@400;500;600;700;800&family=inter:wght@400;500;600&display=swap",
 			},
 			{

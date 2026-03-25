@@ -5,7 +5,6 @@ import {
 	ScrollIcon,
 	ShieldCheckIcon,
 } from "@phosphor-icons/react";
-import { useAOS } from "#/hooks/useAOS";
 
 const FEATURES = [
 	{
@@ -164,21 +163,15 @@ const FEATURES = [
 ];
 
 export function Features() {
-	const { getAOSProps } = useAOS();
-
 	return (
-		<section className="py-16 bg-white" {...getAOSProps("fade-up")}>
+		<section className="py-16 bg-white">
 			<div className="container mx-auto px-5 md:px-10 space-y-0">
 				{FEATURES.map((feature, i) => (
 					<div
 						key={feature.title}
 						className={`grid grid-cols-1 md:grid-cols-2 gap-12 items-center py-16 md:py-20 ${i > 0 ? "border-t border-slate-100" : ""}`}
-						{...getAOSProps("fade-up", i * 100)}
 					>
-						<div
-							className={feature.flip ? "md:order-2" : ""}
-							{...getAOSProps("fade-up", i * 100 + 50)}
-						>
+						<div className={feature.flip ? "md:order-2" : ""}>
 							<div className="w-14 h-14 rounded-xl bg-primary-300/30 flex items-center justify-center mb-6">
 								{feature.icon}
 							</div>
@@ -195,12 +188,7 @@ export function Features() {
 								Learn more <ArrowRightIcon size={14} weight="bold" />
 							</a>
 						</div>
-						<div
-							className={feature.flip ? "md:order-1" : ""}
-							{...getAOSProps("fade-up", i * 100 + 100)}
-						>
-							{feature.ui}
-						</div>
+						<div className={feature.flip ? "md:order-1" : ""}>{feature.ui}</div>
 					</div>
 				))}
 			</div>
