@@ -1,14 +1,12 @@
+# Virtual environment
 venv/
-env/
+
 .env
 
-# Python
+# pycache
 __pycache__/
+*.pyd
+*.pyo
 
-# Django
-*.log
 db.sqlite3
 db.sqlite3-journal
-/media/
-/staticfiles/
-
