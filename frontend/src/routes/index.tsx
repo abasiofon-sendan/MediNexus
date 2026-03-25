@@ -1,7 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
+import Footer from "#/components/Footer";
+import Header from "#/components/Header";
+import { Features } from "#/components/home/Features";
+import Hero from "#/components/home/Hero";
+import HowItWorks from "#/components/home/HowItWorks";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({ component: LandingPage });
 
-function App() {
-	return <main className=" px-4 pb-8 pt-14">HELLO WORLD!</main>;
+function LandingPage() {
+	return (
+		<>
+			<Header />
+			<Hero />
+			<HowItWorks />
+			<Features />
+			<Footer />
+		</>
+	);
 }
