@@ -225,3 +225,45 @@ export interface ApiError {
   status: number;
   details?: Record<string, string[]>;
 }
+
+// ============================================================================
+// DOCTOR DASHBOARD TYPES
+// ============================================================================
+
+export interface DoctorStats {
+  patientsAccessedToday: number;
+  recordsCreated: number;
+  pendingApprovals: number;
+  recentActivities: number;
+}
+
+export interface RecentPatient {
+  nin: string;
+  name: string;
+  age: number;
+  bloodGroup: BloodGroup;
+  lastAccessed: string; // ISO date string
+  recordCount: number;
+}
+
+export interface ConsentCheckResult {
+  hasConsent: boolean;
+  expiresAt?: string; // ISO date string
+  hospitalName?: string;
+  doctorEmail?: string;
+  isExpiringSoon?: boolean; // < 24 hours
+}
+
+export interface DoctorActivitySummary {
+  totalPatientsAccessed: number;
+  recordsCreatedThisWeek: number;
+  recordsCreatedToday: number;
+  lastActivity?: string; // ISO date string
+}
+
+export interface PatientSearchResult {
+  nin: string;
+  records: HealthRecordDetail[];
+  consent: ConsentCheckResult;
+  patientInfo?: RecentPatient;
+}

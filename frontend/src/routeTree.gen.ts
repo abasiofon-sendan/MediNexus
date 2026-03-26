@@ -24,6 +24,7 @@ import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDoctorRecordsRouteImport } from './routes/_authenticated/doctor/records'
 import { Route as AuthenticatedDoctorPatientsRouteImport } from './routes/_authenticated/doctor/patients'
 import { Route as AuthenticatedDoctorDashboardRouteImport } from './routes/_authenticated/doctor/dashboard'
+import { Route as AuthenticatedDoctorCreateRouteImport } from './routes/_authenticated/doctor/create'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -102,6 +103,12 @@ const AuthenticatedDoctorDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedDoctorRoute,
   } as any)
+const AuthenticatedDoctorCreateRoute =
+  AuthenticatedDoctorCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/records': typeof AuthenticatedRecordsRoute
   '/doctor/login': typeof DoctorLoginRoute
   '/doctor/register': typeof DoctorRegisterRoute
+  '/doctor/create': typeof AuthenticatedDoctorCreateRoute
   '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
   '/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
   '/doctor/records': typeof AuthenticatedDoctorRecordsRoute
@@ -131,6 +139,7 @@ export interface FileRoutesByTo {
   '/records': typeof AuthenticatedRecordsRoute
   '/doctor/login': typeof DoctorLoginRoute
   '/doctor/register': typeof DoctorRegisterRoute
+  '/doctor/create': typeof AuthenticatedDoctorCreateRoute
   '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
   '/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
   '/doctor/records': typeof AuthenticatedDoctorRecordsRoute
@@ -149,6 +158,7 @@ export interface FileRoutesById {
   '/_authenticated/records': typeof AuthenticatedRecordsRoute
   '/doctor/login': typeof DoctorLoginRoute
   '/doctor/register': typeof DoctorRegisterRoute
+  '/_authenticated/doctor/create': typeof AuthenticatedDoctorCreateRoute
   '/_authenticated/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
   '/_authenticated/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
   '/_authenticated/doctor/records': typeof AuthenticatedDoctorRecordsRoute
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/doctor/login'
     | '/doctor/register'
+    | '/doctor/create'
     | '/doctor/dashboard'
     | '/doctor/patients'
     | '/doctor/records'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/doctor/login'
     | '/doctor/register'
+    | '/doctor/create'
     | '/doctor/dashboard'
     | '/doctor/patients'
     | '/doctor/records'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/records'
     | '/doctor/login'
     | '/doctor/register'
+    | '/_authenticated/doctor/create'
     | '/_authenticated/doctor/dashboard'
     | '/_authenticated/doctor/patients'
     | '/_authenticated/doctor/records'
@@ -322,16 +335,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDoctorDashboardRouteImport
       parentRoute: typeof AuthenticatedDoctorRoute
     }
+    '/_authenticated/doctor/create': {
+      id: '/_authenticated/doctor/create'
+      path: '/create'
+      fullPath: '/doctor/create'
+      preLoaderRoute: typeof AuthenticatedDoctorCreateRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
   }
 }
 
 interface AuthenticatedDoctorRouteChildren {
+  AuthenticatedDoctorCreateRoute: typeof AuthenticatedDoctorCreateRoute
   AuthenticatedDoctorDashboardRoute: typeof AuthenticatedDoctorDashboardRoute
   AuthenticatedDoctorPatientsRoute: typeof AuthenticatedDoctorPatientsRoute
   AuthenticatedDoctorRecordsRoute: typeof AuthenticatedDoctorRecordsRoute
 }
 
 const AuthenticatedDoctorRouteChildren: AuthenticatedDoctorRouteChildren = {
+  AuthenticatedDoctorCreateRoute: AuthenticatedDoctorCreateRoute,
   AuthenticatedDoctorDashboardRoute: AuthenticatedDoctorDashboardRoute,
   AuthenticatedDoctorPatientsRoute: AuthenticatedDoctorPatientsRoute,
   AuthenticatedDoctorRecordsRoute: AuthenticatedDoctorRecordsRoute,

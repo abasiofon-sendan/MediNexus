@@ -5,6 +5,7 @@ import {
 	LockKey,
 	ShieldCheck,
 	Users,
+	Plus,
 } from "@phosphor-icons/react";
 
 export interface NavItem {
@@ -53,6 +54,11 @@ export const doctorNavItems: NavItem[] = [
 		title: "Patient Records",
 		href: "/doctor/records",
 		icon: FileText,
+	},
+	{
+		title: "Create Record",
+		href: "/doctor/create",
+		icon: Plus,
 	},
 	{
 		title: "My Patients",
