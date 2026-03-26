@@ -46,7 +46,7 @@ function PatientLogin() {
 			if (user.role === "doctor") {
 				navigate({ to: "/doctor/dashboard" });
 			} else {
-				navigate({ to: "/patient/dashboard" });
+				navigate({ to: "/dashboard" });
 			}
 		},
 		onError: (error: any) => {
