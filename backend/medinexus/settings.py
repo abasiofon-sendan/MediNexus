@@ -256,3 +256,5 @@ LOGGING = {
 ANYMAIL = {
     "BREVO_API_KEY": os.environ.get("BREVO_API_KEY"),
 }
+
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
