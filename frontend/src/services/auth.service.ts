@@ -1,5 +1,6 @@
 import { client } from "../configs/axios";
 import { ENDPOINTS } from "../ENDPOINTS";
+import type { InterswitchAuthResponse, NINDetailsRequest, NINDetailsResponse } from "#/types/api.types";
 
 // Types
 interface LoginRequest {
@@ -10,13 +11,9 @@ interface LoginRequest {
 interface LoginResponse {
 	access: string;
 	refresh: string;
-	user?: {
-		id: string;
-		email: string;
-		first_name: string;
-		last_name: string;
-		role: "patient" | "doctor";
-	};
+	user_type: "PATIENT" | "PROVIDER" | "ADMIN";
+	email: string;
+	email_verified?: boolean;
 }
 
 interface PatientRegisterRequest {
@@ -105,5 +102,22 @@ export const authService = {
 	getHospitals: async (): Promise<Hospital[]> => {
 		const response = await client.get(ENDPOINTS.PROVIDERS.HOSPITALS);
 		return response.data;
+	},
+
+	/**
+	 * Get Interswitch access token for NIN verification
+	 */
+	getInterswitchToken: async (): Promise<string> => {
+		const response = await client.post<InterswitchAuthResponse>(ENDPOINTS.AUTH.INTERSWITCH_AUTH);
+		return response.data.access_token;
+	},
+
+	/**
+	 * Verify NIN and get identity details from Interswitch
+	 */
+	verifyNINAndGetDetails: async (nin: string, accessToken: string): Promise<NINDetailsResponse['data']> => {
+		const requestData: NINDetailsRequest = { nin, access_token: accessToken };
+		const response = await client.post<NINDetailsResponse>(ENDPOINTS.AUTH.NIN_FULL_DETAILS, requestData);
+		return response.data.data;
 	},
 };

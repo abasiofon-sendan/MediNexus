@@ -7,79 +7,58 @@ import type {
   RecordType 
 } from '#/types/api.types';
 
-// Mock data imports
-import { 
-  mockHealthRecords, 
-  getMockRecordsByStatus, 
-  getMockRecordById,
-  getMockPendingRecords,
-  getMockRecordStats 
-} from '#/mocks/records.mock';
-
-// Environment flag to switch between mock and real API
-const USE_MOCK_DATA = import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API;
-
 // ============================================================================
 // RECORDS SERVICE
 // ============================================================================
 
 export const recordsService = {
   /**
-   * Get all records for the authenticated patient
-   * TODO: Replace with real API call to /records/my-records/ when backend is ready
+   * Get all records for the authenticated patient using patient_email
+   * Backend endpoint: /records/patient/{patient_email}/
    */
   getMyRecords: async (): Promise<HealthRecordDetail[]> => {
-    if (USE_MOCK_DATA) {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockHealthRecords;
+    // Get patient email from auth state or localStorage
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      throw new Error('User not authenticated');
     }
     
-    // TODO: Uncomment when backend endpoint is available
-    // const response = await client.get<HealthRecordDetail[]>(ENDPOINTS.RECORDS.MY_RECORDS);
-    // return response.data;
+    const user = JSON.parse(userStr);
+    const patientEmail = user.email;
     
-    // Fallback: Use NIN-based endpoint (requires patient's own NIN)
-    // This is temporary until backend adds /my-records/ endpoint
-    throw new Error('Backend endpoint /records/my-records/ not yet implemented. Using mock data for now.');
+    if (!patientEmail) {
+      throw new Error('Patient email not available');
+    }
+    
+    const response = await client.get<HealthRecordDetail[]>(ENDPOINTS.RECORDS.PATIENT_RECORDS(patientEmail));
+    return response.data;
   },
 
   /**
    * Get pending records awaiting patient approval
-   * TODO: Replace with real API call to /records/my-pending-records/ when backend is ready
+   * Filter records where is_approved is false and no is_rejected field exists
    */
   getPendingRecords: async (): Promise<HealthRecordDetail[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return getMockPendingRecords();
-    }
-    
-    // TODO: Uncomment when backend endpoint is available
-    // const response = await client.get<HealthRecordDetail[]>(ENDPOINTS.RECORDS.MY_PENDING_RECORDS);
-    // return response.data;
-    
-    throw new Error('Backend endpoint /records/my-pending-records/ not yet implemented. Using mock data for now.');
+    const allRecords = await recordsService.getMyRecords();
+    // Backend doesn't have is_rejected field, so pending = not approved
+    return allRecords.filter(record => !record.is_approved);
   },
 
   /**
-   * Get records by status (approved, pending, rejected, all)
+   * Get records by status (approved, pending, all)
+   * Note: Backend doesn't support is_rejected field
    */
   getRecordsByStatus: async (status: 'all' | 'approved' | 'pending' | 'rejected'): Promise<HealthRecordDetail[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return getMockRecordsByStatus(status);
-    }
-    
-    // When real API is available, this might be done with query parameters
     const allRecords = await recordsService.getMyRecords();
     
     switch (status) {
       case 'approved':
-        return allRecords.filter(record => record.is_approved && !record.is_rejected);
+        return allRecords.filter(record => record.is_approved);
       case 'pending':
-        return allRecords.filter(record => !record.is_approved && !record.is_rejected);
+        return allRecords.filter(record => !record.is_approved);
       case 'rejected':
-        return allRecords.filter(record => record.is_rejected);
+        // Backend doesn't support rejected status, return empty array
+        return [];
       default:
         return allRecords;
     }
@@ -89,18 +68,14 @@ export const recordsService = {
    * Get a single record by ID
    */
   getRecordById: async (id: string): Promise<HealthRecordDetail | null> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      return getMockRecordById(id) || null;
+    try {
+      const response = await client.get<HealthRecordDetail>(ENDPOINTS.RECORDS.RECORD_DETAIL(id));
+      return response.data;
+    } catch (error) {
+      // If individual endpoint doesn't exist, fallback to getting from all records
+      const allRecords = await recordsService.getMyRecords();
+      return allRecords.find(record => record.id === id) || null;
     }
-    
-    // TODO: Add backend endpoint for single record fetch
-    // const response = await client.get<HealthRecordDetail>(`/records/${id}/`);
-    // return response.data;
-    
-    // Fallback: Get from all records
-    const allRecords = await recordsService.getMyRecords();
-    return allRecords.find(record => record.id === id) || null;
   },
 
   /**
@@ -108,56 +83,28 @@ export const recordsService = {
    */
   approveRecord: async (recordId: string, otpCode: string): Promise<void> => {
     const request: HealthRecordApproveRequest = { otp_code: otpCode };
-    
-    if (USE_MOCK_DATA) {
-      // Simulate API delay and validation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate OTP validation (accept any 6-digit code for demo)
-      if (otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
-        throw new Error('Invalid OTP code. Please enter a 6-digit code.');
-      }
-      
-      // Simulate success (in real app, this would update the record status)
-      console.log(`Record ${recordId} approved with OTP ${otpCode}`);
-      return;
-    }
-    
-    // Real API call
     await client.post(ENDPOINTS.RECORDS.APPROVE(recordId), request);
   },
 
   /**
    * Reject a pending health record
+   * Note: Backend doesn't support rejection, so this will throw an error
    */
   rejectRecord: async (recordId: string, reason?: string): Promise<void> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log(`Record ${recordId} rejected. Reason: ${reason || 'No reason provided'}`);
-      return;
-    }
-    
-    // Real API call (backend doesn't seem to accept reason parameter)
-    await client.post(ENDPOINTS.RECORDS.REJECT(recordId));
+    throw new Error('Record rejection is not supported by the backend API');
   },
 
   /**
    * Get record statistics for dashboard
    */
   getRecordStats: async () => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return getMockRecordStats();
-    }
-    
-    // Calculate stats from actual records
     const allRecords = await recordsService.getMyRecords();
     
     return {
       total: allRecords.length,
-      approved: allRecords.filter(r => r.is_approved && !r.is_rejected).length,
-      pending: allRecords.filter(r => !r.is_approved && !r.is_rejected).length,
-      rejected: allRecords.filter(r => r.is_rejected).length
+      approved: allRecords.filter(r => r.is_approved).length,
+      pending: allRecords.filter(r => !r.is_approved).length,
+      rejected: 0 // Backend doesn't support rejected status
     };
   }
 };
@@ -171,12 +118,9 @@ export const recordsService = {
  */
 export function getRecordTypeDisplay(type: RecordType): string {
   const typeMap: Record<RecordType, string> = {
-    DIAGNOSIS: 'Diagnosis',
-    PRESCRIPTION: 'Prescription',
-    LAB_RESULT: 'Lab Result',
-    IMAGING: 'Imaging',
-    SURGERY: 'Surgery',
-    OTHER: 'Other'
+    LAB_TEST: 'Lab Test',
+    VACCINATION: 'Vaccination',
+    CONSULTATION: 'Consultation'
   };
   
   return typeMap[type] || type;
@@ -187,12 +131,9 @@ export function getRecordTypeDisplay(type: RecordType): string {
  */
 export function getRecordTypeBadgeVariant(type: RecordType): string {
   const variantMap: Record<RecordType, string> = {
-    DIAGNOSIS: 'active',
-    PRESCRIPTION: 'pending', 
-    LAB_RESULT: 'approved',
-    IMAGING: 'processing',
-    SURGERY: 'error',
-    OTHER: 'inactive'
+    LAB_TEST: 'approved',
+    VACCINATION: 'active',
+    CONSULTATION: 'pending'
   };
   
   return variantMap[type] || 'inactive';
@@ -200,18 +141,18 @@ export function getRecordTypeBadgeVariant(type: RecordType): string {
 
 /**
  * Get status badge variant for record status
+ * Note: Backend doesn't support is_rejected field
  */
 export function getRecordStatusBadgeVariant(record: HealthRecordDetail): string {
-  if (record.is_rejected) return 'error';
   if (record.is_approved) return 'approved';
-  return 'pending'; // Pending approval
+  return 'pending'; // Only pending and approved states available
 }
 
 /**
  * Get human-readable status text
+ * Note: Backend doesn't support is_rejected field
  */
 export function getRecordStatusText(record: HealthRecordDetail): string {
-  if (record.is_rejected) return 'Rejected';
   if (record.is_approved) return 'Approved';
   return 'Pending Approval';
 }

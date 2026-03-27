@@ -31,28 +31,22 @@ export const Route = createFileRoute("/doctor/register")({
 });
 
 const SPECIALTIES = [
-	"General Practice",
-	"Cardiology",
-	"Dermatology",
-	"Emergency Medicine",
-	"Endocrinology",
-	"Family Medicine",
-	"Gastroenterology",
-	"Hematology",
-	"Internal Medicine",
-	"Nephrology",
-	"Neurology",
-	"Obstetrics & Gynecology",
-	"Oncology",
-	"Ophthalmology",
-	"Orthopedics",
-	"Otolaryngology (ENT)",
-	"Pediatrics",
-	"Psychiatry",
-	"Pulmonology",
-	"Radiology",
-	"Surgery",
-	"Urology",
+	{ value: "GENERAL_PRACTICE", label: "General Practice" },
+	{ value: "CARDIOLOGY", label: "Cardiology" },
+	{ value: "DERMATOLOGY", label: "Dermatology" },
+	{ value: "ENDOCRINOLOGY", label: "Endocrinology" },
+	{ value: "GASTROENTEROLOGY", label: "Gastroenterology" },
+	{ value: "NEUROLOGY", label: "Neurology" },
+	{ value: "OBSTETRICS", label: "Obstetrics & Gynaecology" },
+	{ value: "ONCOLOGY", label: "Oncology" },
+	{ value: "OPHTHALMOLOGY", label: "Ophthalmology" },
+	{ value: "ORTHOPAEDICS", label: "Orthopaedics" },
+	{ value: "PAEDIATRICS", label: "Paediatrics" },
+	{ value: "PSYCHIATRY", label: "Psychiatry" },
+	{ value: "RADIOLOGY", label: "Radiology" },
+	{ value: "SURGERY", label: "Surgery" },
+	{ value: "UROLOGY", label: "Urology" },
+	{ value: "OTHER", label: "Other" },
 ];
 
 function DoctorRegister() {
@@ -81,7 +75,7 @@ function DoctorRegister() {
 		mutationFn: authService.doctorRegister,
 		onSuccess: (data) => {
 			const user = {
-				id: data.user?.id || "",
+				id: "",
 				email: formData.email,
 				first_name: formData.first_name,
 				last_name: formData.last_name,
@@ -290,8 +284,8 @@ function DoctorRegister() {
 								</SelectTrigger>
 								<SelectContent>
 									{SPECIALTIES.map((specialty) => (
-										<SelectItem key={specialty} value={specialty}>
-											{specialty}
+										<SelectItem key={specialty.value} value={specialty.value}>
+											{specialty.label}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -420,12 +414,12 @@ function DoctorRegister() {
 								description:
 									"All record access requires patient consent and is logged for transparency.",
 							},
-						].map((feature, i) => (
+						].map((feature) => (
 							<div
-								key={i}
+								key={feature.title}
 								className="flex gap-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/8 transition-colors"
 							>
-								<div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+								<div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center text-white">
 									{feature.icon}
 								</div>
 								<div>

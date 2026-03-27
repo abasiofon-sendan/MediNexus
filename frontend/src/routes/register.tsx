@@ -15,6 +15,7 @@ import {
 	Sparkle,
 	User,
 	UserCircle,
+	Warning,
 } from "@phosphor-icons/react";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -30,6 +31,7 @@ import {
 } from "#/components/ui/select";
 import { authService } from "#/services/auth.service";
 import { useAuthStore } from "#/stores/authStore";
+import { useNINVerification } from "#/hooks/useNINVerification";
 
 interface RegisterSearch {
 	step?: number;
@@ -44,6 +46,7 @@ export const Route = createFileRoute("/register")({
 
 interface NINData {
 	nin: string;
+	isVerified: boolean;
 }
 
 interface StepOneData {
@@ -82,7 +85,7 @@ const saveFormData = (data: Partial<RegistrationFormData>) => {
 	try {
 		const existing = getFormData();
 		const updated: RegistrationFormData = {
-			step1: { nin: "" },
+			step1: { nin: "", isVerified: false },
 			step2: {
 				email: "",
 				password: "",
@@ -150,10 +153,25 @@ function PatientRegister() {
 	const navigate = useNavigate();
 	const { step: urlStep = 1 } = Route.useSearch();
 
+	// NIN verification hook
+	const {
+		interswitchToken,
+		isTokenLoading,
+		tokenError,
+		isVerifying,
+		verificationError,
+		verifiedNINDetails,
+		autoFillData,
+		verifyNIN,
+		clearVerification,
+		isValidNIN,
+	} = useNINVerification();
+
 	// Initialize step from URL parameter
 	const [step, setStep] = useState(urlStep);
 	const [ninData, setNinData] = useState<NINData>({
 		nin: "",
+		isVerified: false,
 	});
 	const [stepOneData, setStepOneData] = useState<StepOneData>({
 		email: "",
@@ -180,7 +198,7 @@ function PatientRegister() {
 		const storedData = getFormData();
 		if (storedData) {
 			setShowResumeMessage(true);
-			setNinData(storedData.step1 || { nin: "" });
+			setNinData(storedData.step1 || { nin: "", isVerified: false });
 			setStepOneData(
 				storedData.step2 || {
 					email: "",
@@ -211,6 +229,31 @@ function PatientRegister() {
 		}
 	}, [urlStep, step]);
 
+	// Auto-fill form when NIN is verified
+	useEffect(() => {
+		if (autoFillData && ninData.isVerified) {
+			setStepOneData(prev => {
+				const newStepOneData = {
+					...prev,
+					first_name: autoFillData.first_name,
+					last_name: autoFillData.last_name,
+					phone_number: autoFillData.phone_number,
+				};
+				saveFormData({ step2: newStepOneData });
+				return newStepOneData;
+			});
+			
+			setStepTwoData(prev => {
+				const newStepTwoData = {
+					...prev,
+					date_of_birth: autoFillData.date_of_birth,
+				};
+				saveFormData({ step3: newStepTwoData });
+				return newStepTwoData;
+			});
+		}
+	}, [autoFillData, ninData.isVerified]);
+
 	// Helper function to navigate to a specific step
 	const goToStep = (newStep: number) => {
 		setStep(newStep);
@@ -220,9 +263,38 @@ function PatientRegister() {
 
 	// Form field change handlers with localStorage persistence
 	const handleNINChange = (field: string, value: string) => {
-		const newData = { ...ninData, [field]: value };
+		const newData = { 
+			...ninData, 
+			[field]: value,
+			// Reset verification status when NIN changes
+			isVerified: field === 'nin' ? false : ninData.isVerified
+		};
 		setNinData(newData);
 		saveFormData({ step1: newData });
+		
+		// Clear verification state when NIN changes
+		if (field === 'nin') {
+			clearVerification();
+		}
+	};
+
+	const handleVerifyNIN = async () => {
+		if (!isValidNIN(ninData.nin)) {
+			setErrors({ nin: "Please enter a valid 11-digit NIN" });
+			return;
+		}
+
+		try {
+			await verifyNIN(ninData.nin);
+			// Update NIN data to mark as verified
+			const newNinData = { ...ninData, isVerified: true };
+			setNinData(newNinData);
+			saveFormData({ step1: newNinData });
+			setErrors({});
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : "NIN verification failed";
+			setErrors({ nin: errorMessage });
+		}
 	};
 
 	const handleStepOneChange = (field: string, value: string) => {
@@ -358,10 +430,20 @@ function PatientRegister() {
 
 		if (!ninData.nin) {
 			newErrors.nin = "NIN is required";
-		} else if (ninData.nin.length !== 11) {
+		} else if (!isValidNIN(ninData.nin)) {
 			newErrors.nin = "NIN must be exactly 11 digits";
-		} else if (!/^\d{11}$/.test(ninData.nin)) {
-			newErrors.nin = "NIN must contain only numbers";
+		}
+		// TEMPORARILY REMOVED: NIN verification requirement for testing
+		// } else if (!ninData.isVerified) {
+		// 	newErrors.nin = "Please verify your NIN before proceeding";
+		// }
+
+		// Show token or verification errors
+		if (tokenError) {
+			newErrors.nin = tokenError;
+		}
+		if (verificationError) {
+			newErrors.nin = verificationError;
 		}
 
 		setErrors(newErrors);
@@ -485,8 +567,7 @@ function PatientRegister() {
 									Verify Your Identity
 								</h1>
 								<p className="text-neutral-600">
-									Enter your NIN to get started. We'll verify your identity with
-									Interswitch Identity API when you complete registration.
+									Enter your NIN to get started. Verification is temporarily disabled for testing - you can proceed without verification.
 								</p>
 							</div>
 
@@ -516,7 +597,7 @@ function PatientRegister() {
 												if (errors.nin) setErrors({ ...errors, nin: "" });
 											}}
 										/>
-										{ninData.nin.length === 11 && !errors.nin && (
+										{ninData.isVerified && (
 											<CheckCircle
 												size={20}
 												weight="bold"
@@ -524,6 +605,81 @@ function PatientRegister() {
 											/>
 										)}
 									</div>
+
+									{/* Test NIPs Helper - TEMPORARY */}
+									<div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+										<p className="text-sm text-amber-800 flex items-start gap-2">
+											<Warning size={16} weight="bold" className="mt-0.5 flex-shrink-0" />
+											<span>
+												<strong>TESTING MODE:</strong> NIN verification temporarily disabled. 
+												Enter any 11-digit NIN and click "Continue" to proceed without verification.
+											</span>
+										</p>
+									</div>
+
+									{/* Verify NIN Button */}
+									{ninData.nin.length === 11 && !ninData.isVerified && (
+										<div className="mt-3">
+											<Button
+												onClick={handleVerifyNIN}
+												disabled={isVerifying || isTokenLoading || !interswitchToken}
+												variant="outline"
+												size="sm"
+												className="w-full"
+											>
+												{isTokenLoading ? "Loading..." : 
+												 isVerifying ? "Verifying..." : 
+												 "Verify NIN"}
+												<ShieldCheck size={16} weight="bold" />
+											</Button>
+										</div>
+									)}
+
+									{/* Token Loading State */}
+									{isTokenLoading && (
+										<div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+											<p className="text-sm text-blue-700 flex items-center gap-2">
+												<Clock size={16} weight="bold" className="animate-spin" />
+												Preparing verification system...
+											</p>
+										</div>
+									)}
+
+									{/* Verification Success */}
+									{ninData.isVerified && verifiedNINDetails && (
+										<div className="mt-3 p-4 rounded-lg bg-green-50 border border-green-200">
+											<div className="flex items-start gap-3">
+												<CheckCircle size={20} weight="bold" className="text-green-600 mt-0.5" />
+												<div>
+													<h4 className="text-sm font-medium text-green-900 mb-1">
+														NIN Verified Successfully
+													</h4>
+													<p className="text-sm text-green-700">
+														Identity confirmed for <strong>{verifiedNINDetails.firstName} {verifiedNINDetails.lastName}</strong>
+														<br />
+														Your personal details will be auto-filled in the next step.
+													</p>
+												</div>
+											</div>
+										</div>
+									)}
+
+									{/* Token Error */}
+									{tokenError && (
+										<div className="mt-3 p-4 rounded-lg bg-red-50 border border-red-200">
+											<div className="flex items-start gap-3">
+												<Warning size={20} weight="bold" className="text-red-600 mt-0.5" />
+												<div>
+													<h4 className="text-sm font-medium text-red-900 mb-1">
+														Verification System Unavailable
+													</h4>
+													<p className="text-sm text-red-700">
+														{tokenError}
+													</p>
+												</div>
+											</div>
+										</div>
+									)}
 
 									{/* Resume Registration Message */}
 									{showResumeMessage && (
@@ -550,7 +706,7 @@ function PatientRegister() {
 																setShowResumeMessage(false);
 																goToStep(1);
 																// Reset all form data
-																setNinData({ nin: "" });
+																setNinData({ nin: "", isVerified: false });
 																setStepOneData({
 																	email: "",
 																	password: "",
@@ -603,10 +759,10 @@ function PatientRegister() {
 							<Button
 								onClick={handleNINNext}
 								disabled={ninData.nin.length !== 11}
-								className="w-full h-12 bg-primary hover:bg-primary/90 text-white"
+								className="w-full h-12 bg-primary hover:bg-primary/90 text-white disabled:opacity-50"
 								size="lg"
 							>
-								Continue
+								Continue (Skip Verification)
 								<ArrowRight size={20} weight="bold" />
 							</Button>
 
@@ -631,9 +787,28 @@ function PatientRegister() {
 									Personal Details
 								</h1>
 								<p className="text-neutral-600">
-									We'll verify your details via Interswitch when you submit
+									{ninData.isVerified ? 
+										"We've auto-filled your verified details from your NIN" :
+										"We'll verify your details via Interswitch when you submit"
+									}
 								</p>
 							</div>
+
+							{ninData.isVerified && verifiedNINDetails && (
+								<div className="p-4 rounded-lg bg-green-50 border border-green-200">
+									<div className="flex items-start gap-3">
+										<CheckCircle size={20} weight="bold" className="text-green-600 mt-0.5" />
+										<div>
+											<h4 className="text-sm font-medium text-green-900 mb-1">
+												Auto-filled from NIN Verification
+											</h4>
+											<p className="text-sm text-green-700">
+												Your name, phone number, and date of birth have been automatically filled from your verified NIN details.
+											</p>
+										</div>
+									</div>
+								</div>
+							)}
 
 							<div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
 								<p className="text-sm text-amber-800 flex items-start gap-2">

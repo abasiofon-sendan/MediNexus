@@ -29,21 +29,20 @@ function PatientLogin() {
 	const loginMutation = useMutation({
 		mutationFn: authService.login,
 		onSuccess: (data) => {
-			// Store auth data
+			const role = data.user_type === "PROVIDER" ? "doctor" : "patient";
 			const user = {
-				id: data.user?.id || "",
-				email: formData.email,
-				first_name: data.user?.first_name || "",
-				last_name: data.user?.last_name || "",
-				role: (data.user?.role || "patient") as "patient" | "doctor",
+				id: "",
+				email: data.email,
+				first_name: data.email.split("@")[0],
+				last_name: "",
+				role: role,
 			};
 
 			useAuthStore
 				.getState()
 				.login({ access: data.access, refresh: data.refresh }, user);
 
-			// Redirect based on role
-			if (user.role === "doctor") {
+			if (role === "doctor") {
 				navigate({ to: "/doctor/dashboard" });
 			} else {
 				navigate({ to: "/dashboard" });
@@ -234,15 +233,13 @@ function PatientLogin() {
 								description:
 									"You control who accesses your records through consent approvals",
 							},
-						].map((feature, i) => (
+						].map((feature) => (
 							<div
-								key={i}
+								key={feature.title}
 								className="p-5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all hover:-translate-y-1 duration-300"
 							>
 								<div className="flex items-start gap-4">
-									<div className="flex-shrink-0 text-primary">
-										{feature.icon}
-									</div>
+									<div className="flex-shrink-0 text-white">{feature.icon}</div>
 									<div>
 										<h3 className="text-white font-plus-sans font-semibold text-lg mb-1">
 											{feature.title}

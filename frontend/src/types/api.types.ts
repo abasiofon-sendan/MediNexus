@@ -8,12 +8,9 @@
 // ============================================================================
 
 export type RecordType = 
-  | 'DIAGNOSIS' 
-  | 'PRESCRIPTION' 
-  | 'LAB_RESULT' 
-  | 'IMAGING' 
-  | 'SURGERY' 
-  | 'OTHER';
+  | 'LAB_TEST'
+  | 'VACCINATION'
+  | 'CONSULTATION';
 
 export type AuditAction = 
   | 'READ' 
@@ -44,13 +41,27 @@ export type Specialty =
 // ============================================================================
 
 export interface HealthRecord {
-  id: string; // UUID
-  title: string;
-  record_type: RecordType;
-  hospital: string; // Hospital name
-  recorded_at: string; // ISO date string
-  is_approved: boolean;
-  is_rejected: boolean;
+	id: string;
+	doctor: string; // UUID reference
+	doctor_name: string;
+	patient: string; // UUID reference
+	patient_name: string;
+	patient_email: string; // Backend provides email, not NIN
+	record_type: RecordType;
+	title: string;
+	description: string; // Changed from 'content'
+	is_approved: boolean;
+	approval_timestamp: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+// For backward compatibility, HealthRecordDetail is now same as HealthRecord
+export interface HealthRecordDetail extends HealthRecord {
+	// All fields are now in base HealthRecord interface
+	// Removed: is_rejected (not supported in backend)
+	// Removed: content (renamed to description)
+	// Removed: patient_nin (backend uses patient_email)
 }
 
 export interface HealthRecordDetail extends HealthRecord {
@@ -67,16 +78,38 @@ export interface HealthRecordApproveRequest {
 }
 
 export interface HealthRecordCreateRequest {
-  patient_nin: string; // 11 digits
-  hospital_id: string; // UUID
-  record_type: RecordType;
-  title: string;
-  content: string; // Free-form text
+	patient_email: string; // Changed from patient_nin
+	record_type: RecordType;
+	title: string;
+	description: string; // Changed from content
 }
 
 // ============================================================================
-// CONSENTS
+// AUTHENTICATION - Updated for real backend
 // ============================================================================
+
+// Interswitch Authentication
+export interface InterswitchAuthResponse {
+	success: boolean;
+	access_token: string;
+}
+
+export interface NINDetailsRequest {
+	nin: string;
+	access_token: string;
+}
+
+export interface NINDetailsResponse {
+	success: boolean;
+	data?: {
+		firstName: string;
+		lastName: string;
+		dateOfBirth: string; // YYYY-MM-DD format
+		gender: 'M' | 'F';
+		phoneNumber: string;
+	};
+	error?: string;
+}
 
 export interface ConsentLog {
   id: string; // UUID
@@ -238,7 +271,7 @@ export interface DoctorStats {
 }
 
 export interface RecentPatient {
-  nin: string;
+  email: string;
   name: string;
   age: number;
   bloodGroup: BloodGroup;
@@ -262,7 +295,7 @@ export interface DoctorActivitySummary {
 }
 
 export interface PatientSearchResult {
-  nin: string;
+  email: string;
   records: HealthRecordDetail[];
   consent: ConsentCheckResult;
   patientInfo?: RecentPatient;

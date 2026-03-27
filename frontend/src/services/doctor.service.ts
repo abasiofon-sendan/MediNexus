@@ -1,5 +1,6 @@
 import { client } from '#/configs/axios';
 import { ENDPOINTS } from '#/ENDPOINTS';
+import { auditService } from './audit.service';
 import type { 
   HealthRecordDetail,
   HealthRecordCreateRequest,
@@ -11,60 +12,24 @@ import type {
   DoctorActivitySummary
 } from '#/types/api.types';
 
-// Mock data imports
-import { 
-  mockPatients, 
-  mockPatientRecordsByNin, 
-  mockDoctorStats,
-  mockRecentlyCreatedRecords,
-  mockDoctorAuditLogs
-} from '#/mocks/doctor.mock';
-
-// Environment flag to switch between mock and real API
-const USE_MOCK_DATA = import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API;
-
 // ============================================================================
 // DOCTOR SERVICE
 // ============================================================================
 
 export const doctorService = {
   /**
-   * Search patient records by NIN
-   * Uses existing backend endpoint: GET /api/records/list/{nin}/
+   * Search patient records by email
+   * Uses backend endpoint: GET /api/records/patient/{patient_email}/
    */
-  searchPatientRecordsByNin: async (nin: string): Promise<PatientSearchResult> => {
-    if (USE_MOCK_DATA) {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const records = mockPatientRecordsByNin[nin] || [];
-      const patient = mockPatients.find(p => p.nin === nin);
-      
-      // Simulate consent check (in real API, 403 would be returned if no consent)
-      const hasConsent = records.length > 0; // Mock: has records = has consent
-      
-      return {
-        nin,
-        records,
-        consent: {
-          hasConsent,
-          expiresAt: hasConsent ? '2026-04-15T23:59:59Z' : undefined,
-          hospitalName: hasConsent ? 'Lagos University Teaching Hospital' : undefined,
-          doctorEmail: hasConsent ? 'doctor@example.com' : undefined,
-          isExpiringSoon: false
-        },
-        patientInfo: patient
-      };
-    }
-    
+  searchPatientRecordsByEmail: async (email: string): Promise<PatientSearchResult> => {
     try {
       // Real API call - will return 403 if no consent
       const response = await client.get<HealthRecordDetail[]>(
-        ENDPOINTS.RECORDS.LIST_BY_NIN(nin)
+        ENDPOINTS.RECORDS.PATIENT_RECORDS(email)
       );
       
       return {
-        nin,
+        email,
         records: response.data,
         consent: {
           hasConsent: true,
@@ -76,7 +41,7 @@ export const doctorService = {
       if (error.response?.status === 403) {
         // No consent found
         return {
-          nin,
+          email,
           records: [],
           consent: {
             hasConsent: false
@@ -89,49 +54,27 @@ export const doctorService = {
 
   /**
    * Create a new patient record
-   * Uses existing backend endpoint: POST /api/records/create/
+   * Uses backend endpoint: POST /api/records/create/
+   * Note: Backend expects patient_email not patient_nin
    */
   createPatientRecord: async (data: HealthRecordCreateRequest): Promise<HealthRecordDetail> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Create mock record
-      const newRecord: HealthRecordDetail = {
-        id: `mock-${Date.now()}`,
-        title: data.title,
-        record_type: data.record_type,
-        hospital: 'Current Hospital', // Would come from doctor's hospital
-        recorded_at: new Date().toISOString(),
-        is_approved: false, // Always starts as pending
-        is_rejected: false,
-        content: data.content,
-        doctor_name: 'Dr. Current User',
-        patient_nin: data.patient_nin,
-        created_at: new Date().toISOString()
-      };
-      
-      return newRecord;
-    }
-    
     const response = await client.post<HealthRecordDetail>(
       ENDPOINTS.RECORDS.CREATE,
-      data
+      {
+        ...data,
+        // Backend expects 'description' field, not 'content'
+        description: data.content,
+        content: undefined // Remove content field
+      }
     );
     return response.data;
   },
 
   /**
    * Get doctor dashboard statistics
-   * TODO: Backend may need to add dedicated endpoint for doctor stats
+   * Calculate from audit logs since backend doesn't have dedicated endpoint
    */
   getDoctorStats: async (): Promise<DoctorStats> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockDoctorStats;
-    }
-    
-    // TODO: When backend adds doctor stats endpoint, use it
-    // For now, calculate from audit logs (less efficient but works)
     try {
       const auditLogs = await doctorService.getRecentActivity(100);
       const today = new Date().toDateString();
@@ -140,7 +83,7 @@ export const doctorService = {
         new Date(log.timestamp).toDateString() === today
       );
       
-      const readActions = todayLogs.filter(log => log.action === 'READ');
+      const readActions = todayLogs.filter(log => log.action === 'read');
       const writeActions = auditLogs.filter(log => 
         log.action === 'WRITE_REQUEST' && log.actor_type === 'PROVIDER'
       );
@@ -170,20 +113,15 @@ export const doctorService = {
 
   /**
    * Get recent doctor activity from audit logs
-   * Uses existing endpoint: GET /api/audit/my-logs/
+   * Note: Backend endpoint /audit/my-logs/ may not exist, will handle gracefully
    */
   getRecentActivity: async (limit: number = 10): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return mockDoctorAuditLogs.slice(0, limit);
-    }
-    
     try {
-      // TODO: Backend may need to add limit/pagination to audit endpoint
+      // Note: Backend may not have this endpoint implemented yet
       const response = await client.get<AuditLog[]>(ENDPOINTS.AUDIT.MY_LOGS);
       return response.data.slice(0, limit);
     } catch (error) {
-      console.error('Failed to fetch doctor activity:', error);
+      console.warn('Audit logs endpoint not available:', error);
       return [];
     }
   },
@@ -193,11 +131,6 @@ export const doctorService = {
    * Derived from audit logs - backend may add dedicated endpoint
    */
   getRecentlyAccessedPatients: async (limit: number = 10): Promise<RecentPatient[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      return mockPatients.slice(0, limit);
-    }
-    
     try {
       const auditLogs = await doctorService.getRecentActivity(100);
       
@@ -205,7 +138,7 @@ export const doctorService = {
       const patientAccess = new Map<string, { timestamp: string; records: number }>();
       
       auditLogs
-        .filter(log => log.action === 'READ')
+        .filter(log => log.action === 'read')
         .forEach(log => {
           const existing = patientAccess.get(log.patient_email);
           if (!existing || new Date(log.timestamp) > new Date(existing.timestamp)) {
@@ -220,7 +153,7 @@ export const doctorService = {
       // Note: Real implementation would need patient name lookup
       return Array.from(patientAccess.entries())
         .map(([email, data]) => ({
-          nin: 'Unknown', // Backend would need to provide NIN
+          email,
           name: email.split('@')[0].replace('.', ' '), // Derive from email
           age: 0, // Would need patient lookup
           bloodGroup: 'UNKNOWN' as const,
@@ -230,47 +163,30 @@ export const doctorService = {
         .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime())
         .slice(0, limit);
     } catch (error) {
-      console.error('Failed to fetch recent patients:', error);
+      console.warn('Failed to fetch recent patients:', error);
       return [];
     }
   },
 
   /**
    * Get records created by this doctor
-   * TODO: Backend may need dedicated endpoint for doctor's created records
+   * Note: Backend doesn't have dedicated endpoint for doctor's created records
    */
   getMyCreatedRecords: async (limit: number = 10): Promise<HealthRecordDetail[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockRecentlyCreatedRecords.slice(0, limit);
-    }
-    
-    // TODO: Backend needs endpoint to get records created by current doctor
-    // For now, this would need to be derived from audit logs or separate endpoint
-    throw new Error('Backend endpoint for doctor created records not yet implemented');
+    // Backend doesn't have endpoint to get records created by current doctor
+    // This would need to be derived from audit logs or a separate endpoint
+    console.warn('Backend endpoint for doctor created records not yet implemented');
+    return [];
   },
 
   /**
-   * Check if doctor has consent for specific patient
-   * This is usually checked automatically in searchPatientRecordsByNin
+   * Check if doctor has consent for specific patient by email
+   * This is usually checked automatically in searchPatientRecordsByEmail
    */
-  checkPatientConsent: async (nin: string): Promise<ConsentCheckResult> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const hasConsent = mockPatientRecordsByNin[nin]?.length > 0;
-      
-      return {
-        hasConsent,
-        expiresAt: hasConsent ? '2026-04-15T23:59:59Z' : undefined,
-        hospitalName: hasConsent ? 'Lagos University Teaching Hospital' : undefined,
-        isExpiringSoon: false
-      };
-    }
-    
+  checkPatientConsent: async (email: string): Promise<ConsentCheckResult> => {
     try {
       // Try to access records - if 403, no consent
-      await client.get(ENDPOINTS.RECORDS.LIST_BY_NIN(nin));
+      await client.get(ENDPOINTS.RECORDS.PATIENT_RECORDS(email));
       
       return {
         hasConsent: true
@@ -292,29 +208,21 @@ export const doctorService = {
 // ============================================================================
 
 /**
- * Validate Nigerian NIN format (11 digits)
+ * Validate email format
  */
-export const validateNIN = (nin: string): boolean => {
-  const cleanNin = nin.replace(/\D/g, ''); // Remove non-digits
-  return cleanNin.length === 11;
+export const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 };
 
 /**
- * Format NIN for display (add dashes)
+ * Obfuscate email for privacy (show only first 2 chars and domain)
  */
-export const formatNIN = (nin: string): string => {
-  const cleanNin = nin.replace(/\D/g, '');
-  if (cleanNin.length !== 11) return nin;
+export const obfuscateEmail = (email: string): string => {
+  if (!email.includes('@')) return '***@***.***';
   
-  return `${cleanNin.slice(0, 5)}-${cleanNin.slice(5, 8)}-${cleanNin.slice(8)}`;
-};
-
-/**
- * Obfuscate NIN for privacy (show only last 4 digits)
- */
-export const obfuscateNIN = (nin: string): string => {
-  const cleanNin = nin.replace(/\D/g, '');
-  if (cleanNin.length !== 11) return '***-***-****';
+  const [username, domain] = email.split('@');
+  if (username.length <= 2) return `${username}@${domain}`;
   
-  return `***-***-${cleanNin.slice(-4)}`;
+  return `${username.slice(0, 2)}***@${domain}`;
 };

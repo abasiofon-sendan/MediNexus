@@ -1,21 +1,7 @@
 import { client } from '#/configs/axios';
 import { ENDPOINTS } from '#/ENDPOINTS';
 import type { AuditLog, AuditAction, ActorType } from '#/types/api.types';
-
-// Mock data imports
-import { 
-  mockAuditLogs,
-  getMockAuditLogsByAction,
-  getMockAuditLogsByActorType,
-  getMockRecentAuditLogs,
-  getMockAuditLogsByDateRange,
-  getMockAuditStats,
-  getRelativeTime,
-  getActionDisplayInfo
-} from '#/mocks/audit.mock';
-
-// Environment flag to switch between mock and real API
-const USE_MOCK_DATA = import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API;
+import { getRelativeTime, getActionDisplayInfo } from '#/lib/utils';
 
 // ============================================================================
 // AUDIT SERVICE
@@ -24,16 +10,9 @@ const USE_MOCK_DATA = import.meta.env.DEV && !import.meta.env.VITE_USE_REAL_API;
 export const auditService = {
   /**
    * Get all audit logs for the authenticated user
+   * Note: Backend endpoint /audit/my-logs/ returns 404 - not implemented
    */
   getMyAuditLogs: async (): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return mockAuditLogs.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-    }
-    
-    // Real API call
     const response = await client.get<AuditLog[]>(ENDPOINTS.AUDIT.MY_LOGS);
     return response.data;
   },
@@ -42,11 +21,6 @@ export const auditService = {
    * Get recent audit logs (for dashboard activity feed)
    */
   getRecentActivity: async (limit: number = 5): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return getMockRecentAuditLogs(limit);
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     return allLogs
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
@@ -57,11 +31,6 @@ export const auditService = {
    * Filter audit logs by action type
    */
   getAuditLogsByAction: async (action?: AuditAction): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      return getMockAuditLogsByAction(action);
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     return action ? allLogs.filter(log => log.action === action) : allLogs;
   },
@@ -70,11 +39,6 @@ export const auditService = {
    * Filter audit logs by actor type
    */
   getAuditLogsByActorType: async (actorType?: ActorType): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 350));
-      return getMockAuditLogsByActorType(actorType);
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     return actorType ? allLogs.filter(log => log.actor_type === actorType) : allLogs;
   },
@@ -83,11 +47,6 @@ export const auditService = {
    * Filter audit logs by date range
    */
   getAuditLogsByDateRange: async (startDate: string, endDate: string): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return getMockAuditLogsByDateRange(startDate, endDate);
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -102,14 +61,6 @@ export const auditService = {
    * Search audit logs by description or actor email
    */
   searchAuditLogs: async (query: string): Promise<AuditLog[]> => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return mockAuditLogs.filter(log => 
-        log.description.toLowerCase().includes(query.toLowerCase()) ||
-        log.actor_email.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     return allLogs.filter(log => 
       log.description.toLowerCase().includes(query.toLowerCase()) ||
@@ -121,26 +72,18 @@ export const auditService = {
    * Get audit log statistics for dashboard
    */
   getAuditStats: async () => {
-    if (USE_MOCK_DATA) {
-      await new Promise(resolve => setTimeout(resolve, 250));
-      return getMockAuditStats();
-    }
-    
     const allLogs = await auditService.getMyAuditLogs();
     
-    // Count by action type
     const actionCounts = allLogs.reduce((acc, log) => {
       acc[log.action] = (acc[log.action] || 0) + 1;
       return acc;
     }, {} as Record<AuditAction, number>);
 
-    // Count by actor type
     const actorTypeCounts = allLogs.reduce((acc, log) => {
       acc[log.actor_type] = (acc[log.actor_type] || 0) + 1;
       return acc;
     }, {} as Record<ActorType, number>);
 
-    // Recent activity (last 7 days)
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const recentActivityCount = allLogs.filter(log => 
       new Date(log.timestamp) >= weekAgo

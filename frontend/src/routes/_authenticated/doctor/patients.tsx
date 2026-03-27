@@ -8,7 +8,7 @@ import {
 	TrendUp,
 	ChartBar
 } from "@phosphor-icons/react";
-import { doctorService, obfuscateNIN } from "#/services/doctor.service";
+import { doctorService, obfuscateEmail } from "#/services/doctor.service";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import type { RecentPatient } from "#/types/api.types";
@@ -205,7 +205,7 @@ function PatientListItem({ patient, onViewRecords }: PatientListItemProps) {
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
 					{/* Patient Avatar */}
-					<div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(patient.name)}`}>
+					<div className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm ${getAvatarColor(patient.name)}`}>
 						{getInitials(patient.name)}
 					</div>
 					
@@ -213,7 +213,7 @@ function PatientListItem({ patient, onViewRecords }: PatientListItemProps) {
 					<div>
 						<h3 className="font-semibold text-gray-900">{patient.name}</h3>
 						<div className="flex items-center gap-4 text-sm text-gray-600">
-							<span>NIN: {obfuscateNIN(patient.nin)}</span>
+							<span>Email: {obfuscateEmail(patient.email)}</span>
 							{patient.age > 0 && <span>{patient.age} years old</span>}
 							{patient.bloodGroup !== 'UNKNOWN' && (
 								<Badge variant="outline" size="sm">

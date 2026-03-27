@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { 
-	MagnifyingGlass, 
-	ShieldCheck, 
-	Warning, 
-	FileText, 
+import {
+	MagnifyingGlass,
+	ShieldCheck,
+	Warning,
+	FileText,
 	Eye,
 	Clock,
 	User,
@@ -13,114 +13,113 @@ import {
 	X,
 	Plus,
 	CaretDown,
-	Funnel
+	Funnel,
 } from "@phosphor-icons/react";
-import { 
-	doctorService, 
-	validateNIN, 
-	formatNIN, 
-	obfuscateNIN 
+import {
+	doctorService,
+	validateEmail,
+	obfuscateEmail,
 } from "#/services/doctor.service";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import type { 
-	HealthRecordDetail, 
-	PatientSearchResult, 
-	RecordType 
+import type {
+	HealthRecordDetail,
+	PatientSearchResult,
+	RecordType,
 } from "#/types/api.types";
 
 export const Route = createFileRoute("/_authenticated/doctor/records")({
 	component: DoctorRecords,
 	validateSearch: (search: Record<string, unknown>) => ({
-		nin: search.nin as string | undefined,
+		email: search.email as string | undefined,
 	}),
 });
 
 function DoctorRecords() {
 	const navigate = useNavigate();
-	const { nin: ninFromParams } = Route.useSearch();
-	
-	const [searchNin, setSearchNin] = useState(ninFromParams || "");
-	const [searchResult, setSearchResult] = useState<PatientSearchResult | null>(null);
+	const { email: emailFromParams } = Route.useSearch();
+
+	const [searchEmail, setSearchEmail] = useState(emailFromParams || "");
+	const [searchResult, setSearchResult] = useState<PatientSearchResult | null>(
+		null,
+	);
 	const [recentSearches, setRecentSearches] = useState<string[]>([]);
-	const [selectedRecord, setSelectedRecord] = useState<HealthRecordDetail | null>(null);
-	const [filterType, setFilterType] = useState<RecordType | 'ALL'>('ALL');
+	const [selectedRecord, setSelectedRecord] =
+		useState<HealthRecordDetail | null>(null);
+	const [filterType, setFilterType] = useState<RecordType | "ALL">("ALL");
 	const [showFilters, setShowFilters] = useState(false);
 
 	// Search patient records mutation
 	const searchMutation = useMutation({
-		mutationFn: (nin: string) => doctorService.searchPatientRecordsByNin(nin),
+		mutationFn: (email: string) => doctorService.searchPatientRecordsByEmail(email),
 		onSuccess: (result) => {
 			setSearchResult(result);
 			// Add to recent searches (avoid duplicates)
-			setRecentSearches(prev => {
-				const filtered = prev.filter(n => n !== result.nin);
-				return [result.nin, ...filtered].slice(0, 5);
+			setRecentSearches((prev) => {
+				const filtered = prev.filter((e) => e !== result.email);
+				return [result.email, ...filtered].slice(0, 5);
 			});
 		},
 		onError: (error: any) => {
 			alert(error.message || "Failed to search patient records");
-		}
+		},
 	});
 
-	// Auto-search if NIN provided in URL params
+	// Auto-search if email provided in URL params
 	useEffect(() => {
-		if (ninFromParams && validateNIN(ninFromParams)) {
-			searchMutation.mutate(ninFromParams);
+		if (emailFromParams && validateEmail(emailFromParams)) {
+			searchMutation.mutate(emailFromParams);
 		}
-	}, [ninFromParams, searchMutation]);
+	}, [emailFromParams, searchMutation]);
 
 	const handleSearch = () => {
-		const cleanNin = searchNin.replace(/\D/g, '');
-		
-		if (!validateNIN(cleanNin)) {
-			alert("Please enter a valid 11-digit NIN");
+		const cleanEmail = searchEmail.trim();
+
+		if (!validateEmail(cleanEmail)) {
+			alert("Please enter a valid email address");
 			return;
 		}
 
-		searchMutation.mutate(cleanNin);
+		searchMutation.mutate(cleanEmail);
 	};
 
-	const handleNinInputChange = (value: string) => {
-		// Auto-format NIN as user types
-		const cleanValue = value.replace(/\D/g, '');
-		if (cleanValue.length <= 11) {
-			setSearchNin(cleanValue);
-		}
+	const handleEmailInputChange = (value: string) => {
+		setSearchEmail(value.trim());
 	};
 
-	const handleRecentSearch = (nin: string) => {
-		setSearchNin(nin);
-		searchMutation.mutate(nin);
+	const handleRecentSearch = (email: string) => {
+		setSearchEmail(email);
+		searchMutation.mutate(email);
 	};
 
 	const clearSearch = () => {
 		setSearchResult(null);
-		setSearchNin("");
-		setFilterType('ALL');
+		setSearchEmail("");
+		setFilterType("ALL");
 	};
 
 	// Filter records by type
-	const filteredRecords = searchResult?.records.filter(record => 
-		filterType === 'ALL' || record.record_type === filterType
-	) || [];
+	const filteredRecords =
+		searchResult?.records.filter(
+			(record) => filterType === "ALL" || record.record_type === filterType,
+		) || [];
 
 	return (
 		<div className="space-y-8">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-3xl font-bold font-plus-sans text-white mb-2">
+					<h1 className="text-3xl font-bold font-plus-sans text-black mb-2">
 						Patient Records
 					</h1>
-					<p className="text-white/75 text-base">
+					<p className="text-black/75 text-base">
 						Search and view patient medical records with active consent
 					</p>
 				</div>
-				
-				<Button 
-					onClick={() => navigate({ to: '/doctor/create' })}
+
+				<Button
+					onClick={() => navigate({ to: "/doctor/create" })}
 					className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700"
 				>
 					<Plus size={20} />
@@ -132,50 +131,53 @@ function DoctorRecords() {
 			<div className="bg-white rounded-lg p-6 border border-white/10">
 				<div className="flex flex-col md:flex-row gap-4 mb-4">
 					<div className="flex-1">
-						<label htmlFor="nin-search" className="block text-sm font-medium text-gray-900 mb-2">
-							Patient NIN (11 digits)
+						<label
+							htmlFor="email-search"
+							className="block text-sm font-medium text-gray-900 mb-2"
+						>
+							Patient Email Address
 						</label>
 						<div className="relative">
 							<Input
-								id="nin-search"
-								type="text"
-								value={formatNIN(searchNin)}
-								onChange={(e) => handleNinInputChange(e.target.value)}
-								placeholder="Enter patient NIN (e.g., 12345-678-901)"
+								id="email-search"
+								type="email"
+								value={searchEmail}
+								onChange={(e) => handleEmailInputChange(e.target.value)}
+								placeholder="Enter patient email (e.g., patient@example.com)"
 								className="pl-10 pr-4"
 								onKeyDown={(e) => {
-									if (e.key === 'Enter') {
+									if (e.key === "Enter") {
 										handleSearch();
 									}
 								}}
 							/>
-							<MagnifyingGlass 
-								size={20} 
-								className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" 
+							<MagnifyingGlass
+								size={20}
+								className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
 							/>
 						</div>
-						
+
 						{/* Validation hint */}
-						{searchNin && !validateNIN(searchNin) && (
+						{searchEmail && !validateEmail(searchEmail) && (
 							<p className="text-sm text-red-600 mt-1">
-								NIN must be exactly 11 digits
+								Please enter a valid email address
 							</p>
 						)}
 					</div>
-					
+
 					<div className="flex items-end gap-2">
-						<Button 
+						<Button
 							onClick={handleSearch}
-							disabled={!validateNIN(searchNin) || searchMutation.isPending}
+							disabled={!validateEmail(searchEmail) || searchMutation.isPending}
 							className="flex items-center gap-2"
 						>
 							<MagnifyingGlass size={16} />
-							{searchMutation.isPending ? 'Searching...' : 'Search'}
+							{searchMutation.isPending ? "Searching..." : "Search"}
 						</Button>
-						
+
 						{searchResult && (
-							<Button 
-								variant="outline" 
+							<Button
+								variant="outline"
 								onClick={clearSearch}
 								className="flex items-center gap-2"
 							>
@@ -189,16 +191,18 @@ function DoctorRecords() {
 				{/* Recent Searches */}
 				{recentSearches.length > 0 && !searchResult && (
 					<div>
-						<p className="text-sm font-medium text-gray-700 mb-2">Recent Searches:</p>
+						<p className="text-sm font-medium text-gray-700 mb-2">
+							Recent Searches:
+						</p>
 						<div className="flex flex-wrap gap-2">
-							{recentSearches.map((nin) => (
+							{recentSearches.map((email) => (
 								<button
-									key={nin}
+									key={email}
 									type="button"
-									onClick={() => handleRecentSearch(nin)}
+									onClick={() => handleRecentSearch(email)}
 									className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 transition-colors"
 								>
-									{obfuscateNIN(nin)}
+									{obfuscateEmail(email)}
 								</button>
 							))}
 						</div>
@@ -220,7 +224,10 @@ function DoctorRecords() {
 			{searchResult && !searchMutation.isPending && (
 				<div className="space-y-6">
 					{/* Consent Verification Banner */}
-					<ConsentBanner consent={searchResult.consent} patientInfo={searchResult.patientInfo} />
+					<ConsentBanner
+						consent={searchResult.consent}
+						patientInfo={searchResult.patientInfo}
+					/>
 
 					{/* Records Section */}
 					{searchResult.consent.hasConsent && (
@@ -231,7 +238,7 @@ function DoctorRecords() {
 									<h3 className="text-lg font-semibold text-gray-900">
 										Patient Records ({filteredRecords.length})
 									</h3>
-									
+
 									<button
 										type="button"
 										onClick={() => setShowFilters(!showFilters)}
@@ -239,9 +246,9 @@ function DoctorRecords() {
 									>
 										<Funnel size={16} />
 										Filters
-										<CaretDown 
-											size={14} 
-											className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} 
+										<CaretDown
+											size={14}
+											className={`transition-transform ${showFilters ? "rotate-180" : ""}`}
 										/>
 									</button>
 								</div>
@@ -249,20 +256,29 @@ function DoctorRecords() {
 								{/* Filter Options */}
 								{showFilters && (
 									<div className="border-t border-gray-200 pt-4">
-										<p className="text-sm font-medium text-gray-700 mb-2">Record Type:</p>
+										<p className="text-sm font-medium text-gray-700 mb-2">
+											Record Type:
+										</p>
 										<div className="flex flex-wrap gap-2">
-											{['ALL', 'DIAGNOSIS', 'PRESCRIPTION', 'LAB_RESULT', 'IMAGING', 'SURGERY', 'OTHER'].map((type) => (
+											{[
+												"ALL",
+												"LAB_TEST",
+												"VACCINATION",
+												"CONSULTATION",
+											].map((type) => (
 												<button
 													key={type}
 													type="button"
-													onClick={() => setFilterType(type as RecordType | 'ALL')}
+													onClick={() =>
+														setFilterType(type as RecordType | "ALL")
+													}
 													className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
 														filterType === type
-															? 'bg-teal-50 border-teal-200 text-teal-800'
-															: 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+															? "bg-teal-50 border-teal-200 text-teal-800"
+															: "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
 													}`}
 												>
-													{type.replace('_', ' ')}
+													{type.replace("_", " ")}
 												</button>
 											))}
 										</div>
@@ -274,19 +290,20 @@ function DoctorRecords() {
 							{filteredRecords.length === 0 ? (
 								<div className="bg-white rounded-lg p-8 border border-white/10 text-center">
 									<FileText size={48} className="mx-auto mb-4 text-gray-300" />
-									<p className="text-gray-900 font-medium mb-2">No records found</p>
+									<p className="text-gray-900 font-medium mb-2">
+										No records found
+									</p>
 									<p className="text-gray-600 text-sm">
-										{searchResult.records.length === 0 
+										{searchResult.records.length === 0
 											? "This patient doesn't have any medical records yet."
-											: "No records match the selected filter."
-										}
+											: "No records match the selected filter."}
 									</p>
 								</div>
 							) : (
 								<div className="space-y-4">
 									{filteredRecords.map((record) => (
-										<RecordCard 
-											key={record.id} 
+										<RecordCard
+											key={record.id}
 											record={record}
 											onClick={() => setSelectedRecord(record)}
 										/>
@@ -302,19 +319,22 @@ function DoctorRecords() {
 			{!searchResult && !searchMutation.isPending && (
 				<div className="bg-white rounded-lg p-8 border border-white/10 text-center">
 					<MagnifyingGlass size={48} className="mx-auto mb-4 text-gray-300" />
-					<p className="text-gray-900 font-medium mb-2">Search Patient Records</p>
+					<p className="text-gray-900 font-medium mb-2">
+						Search Patient Records
+					</p>
 					<p className="text-gray-600 text-sm mb-4">
 						Enter a patient's 11-digit NIN to view their medical records
 					</p>
 					<p className="text-xs text-gray-500">
-						Note: You can only view records for patients who have granted you active consent
+						Note: You can only view records for patients who have granted you
+						active consent
 					</p>
 				</div>
 			)}
 
 			{/* Record Viewer Modal */}
 			{selectedRecord && (
-				<RecordViewerModal 
+				<RecordViewerModal
 					record={selectedRecord}
 					onClose={() => setSelectedRecord(null)}
 				/>
@@ -328,8 +348,8 @@ function DoctorRecords() {
 // ============================================================================
 
 interface ConsentBannerProps {
-	consent: PatientSearchResult['consent'];
-	patientInfo?: PatientSearchResult['patientInfo'];
+	consent: PatientSearchResult["consent"];
+	patientInfo?: PatientSearchResult["patientInfo"];
 }
 
 function ConsentBanner({ consent, patientInfo }: ConsentBannerProps) {
@@ -337,7 +357,10 @@ function ConsentBanner({ consent, patientInfo }: ConsentBannerProps) {
 		return (
 			<div className="bg-green-50 border border-green-200 rounded-lg p-4">
 				<div className="flex items-start gap-3">
-					<ShieldCheck size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
+					<ShieldCheck
+						size={20}
+						className="text-green-600 flex-shrink-0 mt-0.5"
+					/>
 					<div className="flex-1">
 						<div className="flex items-center justify-between">
 							<h4 className="font-medium text-green-900">
@@ -352,7 +375,10 @@ function ConsentBanner({ consent, patientInfo }: ConsentBannerProps) {
 						<p className="text-sm text-green-700 mt-1">
 							You have permission to view this patient's medical records
 							{consent.expiresAt && (
-								<span> until {new Date(consent.expiresAt).toLocaleDateString()}</span>
+								<span>
+									{" "}
+									until {new Date(consent.expiresAt).toLocaleDateString()}
+								</span>
 							)}
 						</p>
 						{consent.isExpiringSoon && (
@@ -375,12 +401,15 @@ function ConsentBanner({ consent, patientInfo }: ConsentBannerProps) {
 						No Active Consent Found
 					</h4>
 					<p className="text-sm text-red-700 mb-3">
-						This patient has not granted you permission to view their medical records.
+						This patient has not granted you permission to view their medical
+						records.
 					</p>
 					<div className="text-sm text-red-600">
 						<p className="font-medium mb-1">What you can do:</p>
 						<ul className="list-disc list-inside space-y-1 text-red-600">
-							<li>Ask the patient to grant consent through their MediNexus app</li>
+							<li>
+								Ask the patient to grant consent through their MediNexus app
+							</li>
 							<li>Verify you're using the correct patient NIN</li>
 							<li>Contact hospital administration if this seems incorrect</li>
 						</ul>
@@ -398,34 +427,36 @@ interface RecordCardProps {
 
 function RecordCard({ record, onClick }: RecordCardProps) {
 	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
+		return new Date(dateString).toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
 		});
 	};
 
 	const getRecordIcon = (type: RecordType) => {
 		switch (type) {
-			case 'DIAGNOSIS': return <User size={18} />;
-			case 'PRESCRIPTION': return <FileText size={18} />;
-			case 'LAB_RESULT': return <FileText size={18} />;
-			case 'IMAGING': return <FileText size={18} />;
-			case 'SURGERY': return <FileText size={18} />;
-			default: return <FileText size={18} />;
+			case "LAB_TEST":
+				return <FileText size={18} />;
+			case "VACCINATION":
+				return <User size={18} />;
+			case "CONSULTATION":
+				return <FileText size={18} />;
+			default:
+				return <FileText size={18} />;
 		}
 	};
 
 	const getRecordBadge = (record: HealthRecordDetail) => {
-		if (record.is_approved) return 'approved';
-		if (record.is_rejected) return 'rejected';
-		return 'pending';
+		if (record.is_approved) return "approved";
+		if (record.is_rejected) return "rejected";
+		return "pending";
 	};
 
 	return (
-		<button 
+		<button
 			type="button"
 			className="w-full bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors cursor-pointer text-left"
 			onClick={onClick}
@@ -437,7 +468,7 @@ function RecordCard({ record, onClick }: RecordCardProps) {
 							{getRecordIcon(record.record_type)}
 						</div>
 					</div>
-					
+
 					<div className="flex-1 min-w-0">
 						<div className="flex items-start justify-between gap-2 mb-2">
 							<h3 className="font-semibold text-gray-900 truncate">
@@ -447,7 +478,7 @@ function RecordCard({ record, onClick }: RecordCardProps) {
 								{getRecordBadge(record)}
 							</Badge>
 						</div>
-						
+
 						<div className="flex items-center gap-4 text-sm text-gray-600 mb-2 flex-wrap">
 							<div className="flex items-center gap-1">
 								<HospitalIcon size={14} />
@@ -464,14 +495,14 @@ function RecordCard({ record, onClick }: RecordCardProps) {
 								</div>
 							)}
 						</div>
-						
+
 						<p className="text-sm text-gray-600 line-clamp-2">
 							{record.content.substring(0, 120)}
-							{record.content.length > 120 ? '...' : ''}
+							{record.content.length > 120 ? "..." : ""}
 						</p>
 					</div>
 				</div>
-				
+
 				<Button
 					variant="outline"
 					size="sm"
@@ -492,20 +523,20 @@ interface RecordViewerModalProps {
 
 function RecordViewerModal({ record, onClose }: RecordViewerModalProps) {
 	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			weekday: 'long',
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
+		return new Date(dateString).toLocaleDateString("en-US", {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
 		});
 	};
 
 	const getRecordBadge = (record: HealthRecordDetail) => {
-		if (record.is_approved) return 'approved';
-		if (record.is_rejected) return 'rejected';
-		return 'pending';
+		if (record.is_approved) return "approved";
+		if (record.is_rejected) return "rejected";
+		return "pending";
 	};
 
 	return (
@@ -513,16 +544,22 @@ function RecordViewerModal({ record, onClose }: RecordViewerModalProps) {
 			<div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
 				<div className="flex items-center justify-between p-6 border-b border-gray-200">
 					<div className="flex items-center gap-3">
-						<h2 className="text-xl font-semibold text-gray-900">Medical Record</h2>
+						<h2 className="text-xl font-semibold text-gray-900">
+							Medical Record
+						</h2>
 						<Badge variant={getRecordBadge(record) as any}>
 							{getRecordBadge(record)}
 						</Badge>
 					</div>
-					<button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+					<button
+						type="button"
+						onClick={onClose}
+						className="text-gray-400 hover:text-gray-600"
+					>
 						<X size={24} />
 					</button>
 				</div>
-				
+
 				<div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
 					{/* Record Metadata */}
 					<div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -530,7 +567,9 @@ function RecordViewerModal({ record, onClose }: RecordViewerModalProps) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 							<div>
 								<span className="font-medium text-gray-700">Type:</span>
-								<span className="ml-2 text-gray-900">{record.record_type.replace('_', ' ')}</span>
+								<span className="ml-2 text-gray-900">
+									{record.record_type.replace("_", " ")}
+								</span>
 							</div>
 							<div>
 								<span className="font-medium text-gray-700">Hospital:</span>
@@ -538,12 +577,16 @@ function RecordViewerModal({ record, onClose }: RecordViewerModalProps) {
 							</div>
 							<div>
 								<span className="font-medium text-gray-700">Recorded:</span>
-								<span className="ml-2 text-gray-900">{formatDate(record.recorded_at)}</span>
+								<span className="ml-2 text-gray-900">
+									{formatDate(record.recorded_at)}
+								</span>
 							</div>
 							{record.doctor_name && (
 								<div>
 									<span className="font-medium text-gray-700">Doctor:</span>
-									<span className="ml-2 text-gray-900">{record.doctor_name}</span>
+									<span className="ml-2 text-gray-900">
+										{record.doctor_name}
+									</span>
 								</div>
 							)}
 						</div>
