@@ -9,12 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DoctorRegisterRouteImport } from './routes/doctor/register'
+import { Route as DoctorLoginRouteImport } from './routes/doctor/login'
+import { Route as AuthenticatedRecordsRouteImport } from './routes/_authenticated/records'
+import { Route as AuthenticatedDoctorRouteImport } from './routes/_authenticated/doctor'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedConsentsRouteImport } from './routes/_authenticated/consents'
+import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticated/audit-log'
+import { Route as AuthenticatedDoctorRecordsRouteImport } from './routes/_authenticated/doctor/records'
+import { Route as AuthenticatedDoctorPatientsRouteImport } from './routes/_authenticated/doctor/patients'
+import { Route as AuthenticatedDoctorDashboardRouteImport } from './routes/_authenticated/doctor/dashboard'
+import { Route as AuthenticatedDoctorCreateRouteImport } from './routes/_authenticated/doctor/create'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,40 +50,212 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DoctorRegisterRoute = DoctorRegisterRouteImport.update({
+  id: '/doctor/register',
+  path: '/doctor/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoctorLoginRoute = DoctorLoginRouteImport.update({
+  id: '/doctor/login',
+  path: '/doctor/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRecordsRoute = AuthenticatedRecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDoctorRoute = AuthenticatedDoctorRouteImport.update({
+  id: '/doctor',
+  path: '/doctor',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedConsentsRoute = AuthenticatedConsentsRouteImport.update({
+  id: '/consents',
+  path: '/consents',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAuditLogRoute = AuthenticatedAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDoctorRecordsRoute =
+  AuthenticatedDoctorRecordsRouteImport.update({
+    id: '/records',
+    path: '/records',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
+const AuthenticatedDoctorPatientsRoute =
+  AuthenticatedDoctorPatientsRouteImport.update({
+    id: '/patients',
+    path: '/patients',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
+const AuthenticatedDoctorDashboardRoute =
+  AuthenticatedDoctorDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
+const AuthenticatedDoctorCreateRoute =
+  AuthenticatedDoctorCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedDoctorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
+  '/consents': typeof AuthenticatedConsentsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/records': typeof AuthenticatedRecordsRoute
+  '/doctor/login': typeof DoctorLoginRoute
+  '/doctor/register': typeof DoctorRegisterRoute
+  '/doctor/create': typeof AuthenticatedDoctorCreateRoute
+  '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
+  '/doctor/records': typeof AuthenticatedDoctorRecordsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
+  '/consents': typeof AuthenticatedConsentsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/records': typeof AuthenticatedRecordsRoute
+  '/doctor/login': typeof DoctorLoginRoute
+  '/doctor/register': typeof DoctorRegisterRoute
+  '/doctor/create': typeof AuthenticatedDoctorCreateRoute
+  '/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
+  '/doctor/records': typeof AuthenticatedDoctorRecordsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
+  '/_authenticated/consents': typeof AuthenticatedConsentsRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/doctor': typeof AuthenticatedDoctorRouteWithChildren
+  '/_authenticated/records': typeof AuthenticatedRecordsRoute
+  '/doctor/login': typeof DoctorLoginRoute
+  '/doctor/register': typeof DoctorRegisterRoute
+  '/_authenticated/doctor/create': typeof AuthenticatedDoctorCreateRoute
+  '/_authenticated/doctor/dashboard': typeof AuthenticatedDoctorDashboardRoute
+  '/_authenticated/doctor/patients': typeof AuthenticatedDoctorPatientsRoute
+  '/_authenticated/doctor/records': typeof AuthenticatedDoctorRecordsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/login'
+    | '/register'
+    | '/audit-log'
+    | '/consents'
+    | '/dashboard'
+    | '/doctor'
+    | '/records'
+    | '/doctor/login'
+    | '/doctor/register'
+    | '/doctor/create'
+    | '/doctor/dashboard'
+    | '/doctor/patients'
+    | '/doctor/records'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to:
+    | '/'
+    | '/about'
+    | '/login'
+    | '/register'
+    | '/audit-log'
+    | '/consents'
+    | '/dashboard'
+    | '/doctor'
+    | '/records'
+    | '/doctor/login'
+    | '/doctor/register'
+    | '/doctor/create'
+    | '/doctor/dashboard'
+    | '/doctor/patients'
+    | '/doctor/records'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/about'
+    | '/login'
+    | '/register'
+    | '/_authenticated/audit-log'
+    | '/_authenticated/consents'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/doctor'
+    | '/_authenticated/records'
+    | '/doctor/login'
+    | '/doctor/register'
+    | '/_authenticated/doctor/create'
+    | '/_authenticated/doctor/dashboard'
+    | '/_authenticated/doctor/patients'
+    | '/_authenticated/doctor/records'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  DoctorLoginRoute: typeof DoctorLoginRoute
+  DoctorRegisterRoute: typeof DoctorRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -65,22 +265,132 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/doctor/register': {
+      id: '/doctor/register'
+      path: '/doctor/register'
+      fullPath: '/doctor/register'
+      preLoaderRoute: typeof DoctorRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doctor/login': {
+      id: '/doctor/login'
+      path: '/doctor/login'
+      fullPath: '/doctor/login'
+      preLoaderRoute: typeof DoctorLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/records': {
+      id: '/_authenticated/records'
+      path: '/records'
+      fullPath: '/records'
+      preLoaderRoute: typeof AuthenticatedRecordsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/doctor': {
+      id: '/_authenticated/doctor'
+      path: '/doctor'
+      fullPath: '/doctor'
+      preLoaderRoute: typeof AuthenticatedDoctorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/consents': {
+      id: '/_authenticated/consents'
+      path: '/consents'
+      fullPath: '/consents'
+      preLoaderRoute: typeof AuthenticatedConsentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/audit-log': {
+      id: '/_authenticated/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AuthenticatedAuditLogRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/doctor/records': {
+      id: '/_authenticated/doctor/records'
+      path: '/records'
+      fullPath: '/doctor/records'
+      preLoaderRoute: typeof AuthenticatedDoctorRecordsRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
+    '/_authenticated/doctor/patients': {
+      id: '/_authenticated/doctor/patients'
+      path: '/patients'
+      fullPath: '/doctor/patients'
+      preLoaderRoute: typeof AuthenticatedDoctorPatientsRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
+    '/_authenticated/doctor/dashboard': {
+      id: '/_authenticated/doctor/dashboard'
+      path: '/dashboard'
+      fullPath: '/doctor/dashboard'
+      preLoaderRoute: typeof AuthenticatedDoctorDashboardRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
+    '/_authenticated/doctor/create': {
+      id: '/_authenticated/doctor/create'
+      path: '/create'
+      fullPath: '/doctor/create'
+      preLoaderRoute: typeof AuthenticatedDoctorCreateRouteImport
+      parentRoute: typeof AuthenticatedDoctorRoute
+    }
   }
 }
 
+interface AuthenticatedDoctorRouteChildren {
+  AuthenticatedDoctorCreateRoute: typeof AuthenticatedDoctorCreateRoute
+  AuthenticatedDoctorDashboardRoute: typeof AuthenticatedDoctorDashboardRoute
+  AuthenticatedDoctorPatientsRoute: typeof AuthenticatedDoctorPatientsRoute
+  AuthenticatedDoctorRecordsRoute: typeof AuthenticatedDoctorRecordsRoute
+}
+
+const AuthenticatedDoctorRouteChildren: AuthenticatedDoctorRouteChildren = {
+  AuthenticatedDoctorCreateRoute: AuthenticatedDoctorCreateRoute,
+  AuthenticatedDoctorDashboardRoute: AuthenticatedDoctorDashboardRoute,
+  AuthenticatedDoctorPatientsRoute: AuthenticatedDoctorPatientsRoute,
+  AuthenticatedDoctorRecordsRoute: AuthenticatedDoctorRecordsRoute,
+}
+
+const AuthenticatedDoctorRouteWithChildren =
+  AuthenticatedDoctorRoute._addFileChildren(AuthenticatedDoctorRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
+  AuthenticatedConsentsRoute: typeof AuthenticatedConsentsRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDoctorRoute: typeof AuthenticatedDoctorRouteWithChildren
+  AuthenticatedRecordsRoute: typeof AuthenticatedRecordsRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
+  AuthenticatedConsentsRoute: AuthenticatedConsentsRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDoctorRoute: AuthenticatedDoctorRouteWithChildren,
+  AuthenticatedRecordsRoute: AuthenticatedRecordsRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  DoctorLoginRoute: DoctorLoginRoute,
+  DoctorRegisterRoute: DoctorRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

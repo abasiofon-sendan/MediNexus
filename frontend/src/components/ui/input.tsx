@@ -1,21 +1,68 @@
-import * as React from "react"
+import * as React from "react";
+import { cn } from "#/lib/utils";
 
-import { cn } from "#/lib/utils"
-
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  return (
-    <input
-      type={type}
-      data-slot="input"
-      className={cn(
-        "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30",
-        "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
-        className
-      )}
-      {...props}
-    />
-  )
+interface InputProps extends React.ComponentProps<"input"> {
+	label?: string;
+	error?: string;
+	icon?: React.ReactNode;
+	variant?: "dark" | "light";
 }
 
-export { Input }
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+	(
+		{ className, type, label, error, icon, variant = "dark", ...props },
+		ref,
+	) => {
+		const isDark = variant === "dark";
+
+		return (
+			<div className="w-full">
+				{label && (
+					<label
+						className={cn(
+							"block text-sm font-medium mb-2 font-plus-sans",
+							isDark ? "text-white/80" : "text-neutral-700",
+						)}
+					>
+						{label}
+					</label>
+				)}
+				<div className="relative">
+					{icon && (
+						<div
+							className={cn(
+								"absolute left-3 top-1/2 -translate-y-1/2",
+								isDark ? "text-white/40" : "text-neutral-400",
+							)}
+						>
+							{icon}
+						</div>
+					)}
+					<input
+						type={type}
+						ref={ref}
+						data-slot="input"
+						className={cn(
+							"h-12 w-full min-w-0 rounded-lg border px-4 py-3 text-base transition-all outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+							isDark
+								? "border-white/10 bg-white/5 backdrop-blur-sm text-white placeholder:text-white/30 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:bg-white/8"
+								: "border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:border-primary-500 focus:ring-4 focus:ring-primary/10",
+							error &&
+								"border-red-500/50 focus:border-red-500/50 focus:ring-red-500/10",
+							icon && "pl-11",
+							className,
+						)}
+						{...props}
+					/>
+				</div>
+				{error && (
+					<p className="mt-1.5 text-sm text-red-400 font-medium">{error}</p>
+				)}
+			</div>
+		);
+	},
+);
+
+Input.displayName = "Input";
+
+export { Input };

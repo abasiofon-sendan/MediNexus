@@ -230,6 +230,24 @@
   --radius-3xl: 24px;
   --radius-full: 9999px;
 
+  /* ── Sidebar Theme Tokens ── */
+  
+  /* Doctor Dashboard - Dark Sidebar Theme */
+  --color-sidebar-dark-bg: #0D1F2D;
+  --color-sidebar-dark-active: rgba(20, 184, 166, 0.18);
+  --color-sidebar-dark-hover: rgba(255, 255, 255, 0.06);
+  --color-sidebar-dark-border: rgba(255, 255, 255, 0.08);
+  --color-sidebar-dark-text: rgba(255, 255, 255, 0.85);
+  --color-sidebar-dark-muted: rgba(255, 255, 255, 0.35);
+
+  /* Patient Dashboard - Light Sidebar Theme */
+  --color-sidebar-light-bg: #ffffff;
+  --color-sidebar-light-active: rgba(20, 184, 166, 0.10);
+  --color-sidebar-light-hover: rgba(20, 184, 166, 0.05);
+  --color-sidebar-light-border: #e2e8f0;
+  --color-sidebar-light-text: #334155;
+  --color-sidebar-light-muted: #64748b;
+
   /* ── Backward Compatibility ── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -274,5 +292,31 @@
   h1, h2, h3, h4 {
     font-family: var(--font-plus-sans);
   }
+}
+
+/* ── Animations ── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* ── Utility Classes ── */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 

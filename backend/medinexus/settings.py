@@ -68,7 +68,7 @@ ROOT_URLCONF = 'medinexus.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -145,22 +145,62 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': (
         'MediNexus is a secure Electronic Health Records (EHR) platform that '
         'enables patients to own and share their medical records with healthcare '
-        'providers. This API powers patient registration (with NIN verification), '
-        'email OTP authentication, health record management, and consent-based '
-        'provider access.'
+        'providers.\n\n'
+        '## Key Features:\n'
+        '- **Patient Registration**: NIN verification via Interswitch Identity API '
+        'with automatic name auto-completion from verified records\n'
+        '- **Email OTP Authentication**: Secure email-based verification\n'
+        '- **Health Record Management**: Upload, store, and manage medical records securely\n'
+        '- **Consent-Based Access**: Patients control who accesses their records\n'
+        '- **Audit Trails**: Complete audit log of all record access\n\n'
+        '## Registration Flow:\n'
+        '1. Call `/accounts/nin/full-details/` with NIN to verify identity and auto-complete names\n'
+        '2. Call `/accounts/patient/register/` with complete registration data\n'
+        '3. Verify email via OTP sent to your inbox\n'
+        '4. Receive JWT tokens for authenticated API access'
     ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'CONTACT': {'name': 'MediNexus Support', 'email': 'support@theMediNexus.com'},
     'LICENSE': {'name': 'Proprietary'},
     'TAGS': [
-        {'name': 'Authentication', 'description': 'Patient registration, login, OTP, and NIN verification.'},
-        {'name': 'Records', 'description': 'Health record management.'},
-        {'name': 'Consents', 'description': 'Patient consent to share records with providers.'},
-        {'name': 'Audit', 'description': 'Audit trail of record access.'},
+        {
+            'name': 'Authentication',
+            'description': (
+                'Patient identity verification and account authentication.\n\n'
+                '**Endpoints:**\n'
+                '- `POST /nin/full-details/` - Verify NIN and get identity details for auto-completion\n'
+                '- `POST /patient/register/` - Register new patient account (NIN pre-verified)\n'
+                '- `POST /login/` - Login with email and password\n'
+                '- `POST /otp/send/` - Request OTP for email verification\n'
+                '- `POST /otp/verify/` - Verify OTP and receive JWT tokens'
+            ),
+        },
+        {
+            'name': 'Records',
+            'description': (
+                'Health record management and access.\n\n'
+                'Allows patients to upload, retrieve, and manage their medical records.'
+            ),
+        },
+        {
+            'name': 'Consents',
+            'description': (
+                'Patient consent management for provider access.\n\n'
+                'Patients can grant or revoke provider access to their records.'
+            ),
+        },
+        {
+            'name': 'Audit',
+            'description': (
+                'Audit trail and access logs.\n\n'
+                'Complete audit trail of all record access and modifications.'
+            ),
+        },
     ],
     'COMPONENT_SPLIT_REQUEST': True,
     'SORT_OPERATIONS': False,
+    'USE_SESSION_AUTH_EXCLUDE': ['accounts'],
 }
 
 SIMPLE_JWT = {

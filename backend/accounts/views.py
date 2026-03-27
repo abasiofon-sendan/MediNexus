@@ -18,7 +18,7 @@ from .serializers import (
     OTPSendSerializer,
     OTPVerifySerializer,
 )
-from .services import verify_nin, send_otp_email, verify_otp_email
+from .services import verify_nin, send_otp_email, verify_otp_email, get_nin_full_details, get_interswitch_token
 
 logger = logging.getLogger(__name__)
 
@@ -39,15 +39,10 @@ class PatientRegisterView(APIView):
         tags=['Authentication'],
         summary='Register a new patient',
         description=(
-            'Creates a new patient account. The supplied NIN is verified against '
-            'the Interswitch Identity API — the submitted `first_name` and `last_name` '
-            'must match the NIN record exactly.\n\n'
+            'Creates a new patient account. The NIN should have been previously verified '
+            'using the separate NIN verification endpoint.\n\n'
             'On success, a **verification OTP is sent** to the registered email '
-            'address (valid 10 min). User must verify email to receive JWT tokens.\n\n'
-            '**Mock mode** (default during development): use any of these test NIPs:\n'
-            '- `12345678901` (Test User, DOB: 1990-01-01)\n'
-            '- `10000000001` (John Doe, DOB: 1985-06-15)\n'
-            '- `10000000002` (Jane Doe, DOB: 1992-03-22)'
+            'address (valid 10 min). User must verify email to receive JWT tokens.'
         ),
         request=PatientRegisterSerializer,
         responses={
@@ -64,7 +59,7 @@ class PatientRegisterView(APIView):
                     )
                 ],
             ),
-            400: OpenApiResponse(description='Validation error or NIN mismatch'),
+            400: OpenApiResponse(description='Validation error'),
             502: OpenApiResponse(description='Email delivery failed - registration rolled back'),
         },
     )
@@ -75,29 +70,14 @@ class PatientRegisterView(APIView):
             logger.warning('Patient registration validation failed: %s', serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        nin = serializer.validated_data.get('nin')
         email = serializer.validated_data.get('email')
-        user_data = {
-            'first_name': serializer.validated_data.get('first_name', ''),
-            'last_name': serializer.validated_data.get('last_name', ''),
-        }
-        dob = serializer.validated_data.get('date_of_birth')
-        if dob:
-            user_data['date_of_birth'] = str(dob)
-
-        logger.info('Running NIN verification for NIN: %s', nin)
-        nin_result = verify_nin(nin, user_data)
-        if not nin_result['verified']:
-            logger.warning('NIN verification failed for NIN %s: %s', nin, nin_result.get('error'))
-            return Response(
-                {'error': f"NIN verification failed: {nin_result.get('error', 'Unknown error')}"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        nin = serializer.validated_data.get('nin')
+        logger.info('Registering patient with NIN: %s (email: %s)', nin, email)
 
         try:
             with transaction.atomic():
                 user = serializer.save()
-                user.nin_verified = True
+                user.nin_verified = True  # NIN already verified via separate endpoint
                 user.save(update_fields=['nin_verified'])
                 logger.info('New patient account created: %s (id=%s)', user.email, user.id)
 
@@ -308,4 +288,142 @@ class OTPVerifyView(APIView):
             return Response(
                 {'error': 'User account not found. Please register first.'},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class InterswitchAuthView(APIView):
+    """
+    Endpoint to authenticate with Interswitch and retrieve an access token.
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Authenticate with Interswitch (get access token)',
+        description='Fetches an OAuth2 access token from Interswitch to be used for subsequent API calls like NIN verification.',
+        responses={
+            200: OpenApiResponse(
+                description='Token retrieved successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success',
+                        value={
+                            'success': True,
+                            'access_token': 'eyJh...'
+                        },
+                    )
+                ],
+            ),
+            500: OpenApiResponse(description='Interswitch API service error'),
+        },
+    )
+    def post(self, request):
+        try:
+            logger.info('Requesting Interswitch access token...')
+            access_token = get_interswitch_token()
+            return Response({'success': True, 'access_token': access_token}, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error('Error fetching Interswitch access token: %s', exc)
+            return Response(
+                {'success': False, 'error': f'Failed to fetch token: {str(exc)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class GetNINFullDetailsView(APIView):
+    """
+    Endpoint to fetch full NIN details from Interswitch Identity API.
+    Requires an access token provided by the frontend.
+    """
+    permission_classes = [AllowAny]
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Get full NIN details (auto-complete for registration)',
+        description=(
+            'Retrieves complete identity information for a given NIN from the '
+            'Interswitch Identity API.\n\n'
+            'Requires the frontend to provide both the `nin` and the `access_token` '
+            'obtained from the `/api/accounts/interswitch/auth/` endpoint.\n\n'
+            '**Mock mode** (default during development): use any of these test NIPs:\n'
+            '- `12345678901` (Test User, DOB: 1990-01-01)\n'
+            '- `10000000001` (John Doe, DOB: 1985-06-15)\n'
+            '- `10000000002` (Jane Doe, DOB: 1992-03-22)'
+        ),
+        request={'application/json': {'type': 'object', 'properties': {'nin': {'type': 'string', 'description': '11-digit NIN'}, 'access_token': {'type': 'string', 'description': 'Interswitch Access Token'}}}},
+        responses={
+            200: OpenApiResponse(
+                description='NIN details retrieved successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success',
+                        value={
+                            'success': True,
+                            'data': {
+                                'firstName': 'John',
+                                'lastName': 'Doe',
+                                'dateOfBirth': '1985-06-15',
+                                'gender': 'M',
+                                'phoneNumber': '08012345678',
+                            },
+                        },
+                    )
+                ],
+            ),
+            400: OpenApiResponse(
+                description='Invalid NIN format or missing token or NIN not found',
+                examples=[
+                    OpenApiExample(
+                        'Invalid NIN',
+                        value={
+                            'success': False,
+                            'error': 'NIN not found in database',
+                        },
+                    )
+                ],
+            ),
+            500: OpenApiResponse(description='Interswitch API service error'),
+        },
+    )
+    def post(self, request):
+        """Fetch full NIN details - authentication handled by frontend."""
+        nin = request.data.get('nin', '').strip()
+        access_token = request.data.get('access_token', '').strip()
+        
+        if not nin:
+            logger.warning('NIN details request with missing NIN')
+            return Response(
+                {'success': False, 'error': 'NIN is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+            
+        if not access_token:
+            logger.warning('NIN details request with missing access token')
+            return Response(
+                {'success': False, 'error': 'access_token is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        try:
+            logger.info('Fetching NIN details for NIN: %s using provided access token', nin)
+            
+            # Get full NIN details using the provided token
+            result = get_nin_full_details(nin, access_token)
+            
+            if not result['success']:
+                logger.warning('Failed to fetch NIN details for NIN %s: %s', nin, result.get('error'))
+                return Response(
+                    result,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            logger.info('Successfully fetched NIN details for NIN: %s', nin)
+            return Response(result, status=status.HTTP_200_OK)
+            
+        except Exception as exc:  # noqa: BLE001
+            logger.error('Error fetching NIN details: %s', exc)
+            return Response(
+                {'success': False, 'error': f'Failed to fetch NIN details: {str(exc)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
