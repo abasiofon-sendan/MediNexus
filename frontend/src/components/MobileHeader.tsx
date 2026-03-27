@@ -27,9 +27,9 @@ export function MobileHeader({ role }: MobileHeaderProps) {
 				</div>
 
 				{/* User Avatar */}
-				<Avatar size="default" className="ring-2 ring-neutral-200">
+				<Avatar size="default" className="ring-2 ring-primary-700">
 					<AvatarFallback
-						className={cn("text-sm font-bold font-plus-sans", avatarColor)}
+						className={cn("text-sm font-medium font-plus-sans", avatarColor)}
 					>
 						{initials}
 					</AvatarFallback>

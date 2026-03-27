@@ -17,13 +17,10 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
 	return (
 		<div className="flex min-h-screen bg-neutral-50">
-			{/* Mobile Header */}
 			<MobileHeader role={role} />
 
-			{/* Desktop/Tablet Sidebar */}
 			<DashboardSidebar role={role} items={navItems} />
 
-			{/* Mobile Bottom Navigation */}
 			<MobileBottomNav role={role} items={navItems} />
 
 			{/* Main Content Area */}

@@ -5,18 +5,17 @@ import { useAuthStore } from "#/stores/authStore";
 
 export const Route = createFileRoute("/_authenticated")({
 	beforeLoad: ({ location }) => {
-		// Access Zustand store synchronously
 		const { isAuthenticated, user } = useAuthStore.getState();
 
 		// Check if user is authenticated
-		// if (!isAuthenticated) {
-		// 	throw redirect({
-		// 		to: "/login",
-		// 		search: {
-		// 			redirect: location.href,
-		// 		},
-		// 	});
-		// }
+		if (!isAuthenticated) {
+			throw redirect({
+				to: "/login",
+				search: {
+					redirect: location.href,
+				},
+			});
+		}
 
 		// Check if user has correct role (patient)
 		// If doctor tries to access patient routes, redirect to doctor dashboard
