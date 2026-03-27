@@ -136,15 +136,6 @@ class DoctorRegisterView(APIView):
                             'id': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
                             'full_name': 'Dr. Emeka Obi',
                             'email': 'emeka.obi@lgh.ng',
-                            'hospital': {
-                                'id': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                                'name': 'Lagos General Hospital',
-                                'hospital_code': 'LGH001',
-                            },
-                            'license_number': 'MDCN-12345',
-                            'specialty': 'CARDIOLOGY',
-                            'is_verified': False,
-                            'created_at': '2026-02-24T14:00:00Z',
                         },
                     )
                 ],
@@ -165,6 +156,75 @@ class DoctorRegisterView(APIView):
         )
         profile_serializer = DoctorProfileSerializer(user.doctor_profile)
         return Response(profile_serializer.data, status=status.HTTP_201_CREATED)
+    
+
+
+
+
+# class ProviderRegisterView(APIView):
+#     permission_classes = [AllowAny]
+
+#     @extend_schema(
+#         tags=['Providers'],
+#         summary='Register a new generic healthcare Provider/Doctor',
+#         description=(
+#             'Creates a mock Doctor/Provider account immediately.\n'
+#             'The created account gets the user_type="PROVIDER"\n'
+#             'This allows them to use the /api/records endpoints immediately to create records.\n\n'
+#             '**Required Fields**:\n'
+#             '- `email`: Unique email address.\n'
+#             '- `password`: Secure password (min 8 chars).\n'
+#             '- `first_name`: Provider\'s first name.\n'
+#             '- `last_name`: Provider\'s last name.\n'
+#             '- `phone_number`: Unique contact phone number.'
+#         ),
+#         request=ProviderRegisterSerializer,
+#         responses={
+#             201: OpenApiResponse(
+#                 description='Provider registration successful',
+#                 examples=[
+#                     OpenApiExample(
+#                         'Success',
+#                         value={
+#                             'id': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+#                             'full_name': 'Dr. Emeka Obi',
+#                             'email': 'emeka.obi@lgh.ng',
+#                             'hospital': {
+#                                 'id': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+#                                 'name': 'Lagos General Hospital',
+#                                 'hospital_code': 'LGH001',
+#                             },
+#                             'license_number': 'MDCN-12345',
+#                             'specialty': 'CARDIOLOGY',
+#                             'is_verified': False,
+#                             'created_at': '2026-02-24T14:00:00Z',
+#                         },
+#                     )
+#                 ],
+#             ),
+#             400: OpenApiResponse(description='Validation error'),
+#         },
+#     )
+    
+#     def post(self, request):
+#         logger.info('Provider registration attempt')
+#         serializer = ProviderRegisterSerializer(data=request.data)
+        
+#         if not serializer.is_valid():
+#             logger.warning('Provider registration validation failed: %s', serializer.errors)
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#         user = serializer.save()
+#         logger.info('New provider account created: %s (id=%s)', user.email, user.id)
+
+#         return Response(
+#             {
+#                 'message': 'Provider registration successful. You can now login.',
+#                 'email': user.email,
+#                 'user_type': user.user_type
+#             },
+#             status=status.HTTP_201_CREATED,
+#         )
 
 
 class DoctorListView(APIView):

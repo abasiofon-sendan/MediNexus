@@ -6,6 +6,7 @@ from .views import (
     DoctorRegisterView,
     DoctorListView,
     DoctorDetailView,
+    # ProviderRegisterView,
 )
 
 urlpatterns = [
