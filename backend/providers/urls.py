@@ -1,5 +1,4 @@
 from django.urls import path
-<<<<<<< tuesday
 from .views import (
     HospitalRegisterView,
     HospitalListView,
@@ -7,6 +6,7 @@ from .views import (
     DoctorRegisterView,
     DoctorListView,
     DoctorDetailView,
+    # ProviderRegisterView,
 )
 
 urlpatterns = [
@@ -19,10 +19,7 @@ urlpatterns = [
     path('doctors/', DoctorListView.as_view(), name='doctor-list'),
     path('doctors/register/', DoctorRegisterView.as_view(), name='doctor-register'),
     path('doctors/<uuid:pk>/', DoctorDetailView.as_view(), name='doctor-detail'),
-=======
-from .views import ProviderRegisterView
 
-urlpatterns = [
-    path('register/', ProviderRegisterView.as_view(), name='provider-register'),
->>>>>>> main
+    # Providers
+    # path('providers/register/', ProviderRegisterView.as_view(), name='provider-register'),
 ]
