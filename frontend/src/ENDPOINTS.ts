@@ -14,6 +14,10 @@ export const AUTH_ENDPOINTS = {
 	OTP_SEND: "/accounts/otp/send/",
 	OTP_VERIFY: "/accounts/otp/verify/",
 	
+	// Password Reset
+	PASSWORD_RESET_REQUEST: "/accounts/password/reset/",
+	PASSWORD_RESET_CONFIRM: "/accounts/password/reset/confirm/",
+	
 	// JWT Token Management
 	TOKEN_REFRESH: "/accounts/token/refresh/",
 	

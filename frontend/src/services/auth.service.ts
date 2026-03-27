@@ -120,4 +120,24 @@ export const authService = {
 		const response = await client.post<NINDetailsResponse>(ENDPOINTS.AUTH.NIN_FULL_DETAILS, requestData);
 		return response.data.data;
 	},
+
+	/**
+	 * Request password reset OTP
+	 */
+	passwordResetRequest: async (email: string): Promise<{ message: string }> => {
+		const response = await client.post<{ message: string }>(ENDPOINTS.AUTH.PASSWORD_RESET_REQUEST, { email });
+		return response.data;
+	},
+
+	/**
+	 * Verify OTP and set new password
+	 */
+	passwordResetConfirm: async (email: string, otpCode: string, newPassword: string): Promise<{ message: string }> => {
+		const response = await client.post<{ message: string }>(ENDPOINTS.AUTH.PASSWORD_RESET_CONFIRM, {
+			email,
+			otp_code: otpCode,
+			new_password: newPassword,
+		});
+		return response.data;
+	},
 };

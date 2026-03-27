@@ -136,6 +136,7 @@ function PatientRecords() {
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="pl-10"
+						variant="light"
 					/>
 				</div>
 			</div>

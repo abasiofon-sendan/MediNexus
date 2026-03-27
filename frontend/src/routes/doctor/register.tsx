@@ -2,6 +2,8 @@ import {
 	ArrowRight,
 	Certificate,
 	EnvelopeSimple,
+	Eye,
+	EyeSlash,
 	Hospital,
 	IdentificationBadge,
 	Lock,
@@ -63,6 +65,8 @@ function DoctorRegister() {
 		specialty: "",
 	});
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	// Fetch hospitals
 	const { data: hospitals, isLoading: hospitalsLoading } = useQuery({
@@ -297,31 +301,49 @@ function DoctorRegister() {
 							)}
 						</div>
 
-						<Input
-							label="Password"
-							type="password"
-							icon={<Lock size={18} />}
-							placeholder="••••••••"
-							value={formData.password}
-							onChange={(e) =>
-								setFormData({ ...formData, password: e.target.value })
-							}
-							error={errors.password}
-							variant="light"
-						/>
+						<div className="relative">
+							<Input
+								label="Password"
+								type={showPassword ? "text" : "password"}
+								icon={<Lock size={18} />}
+								placeholder="••••••••"
+								value={formData.password}
+								onChange={(e) =>
+									setFormData({ ...formData, password: e.target.value })
+								}
+								error={errors.password}
+								variant="light"
+							/>
+							<button
+								type="button"
+								onClick={() => setShowPassword(!showPassword)}
+								className="absolute right-3 top-[42px] text-neutral-400 hover:text-neutral-600"
+							>
+								{showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
 
-						<Input
-							label="Confirm Password"
-							type="password"
-							icon={<Lock size={18} />}
-							placeholder="••••••••"
-							value={formData.confirmPassword}
-							onChange={(e) =>
-								setFormData({ ...formData, confirmPassword: e.target.value })
-							}
-							error={errors.confirmPassword}
-							variant="light"
-						/>
+						<div className="relative">
+							<Input
+								label="Confirm Password"
+								type={showConfirmPassword ? "text" : "password"}
+								icon={<Lock size={18} />}
+								placeholder="••••••••"
+								value={formData.confirmPassword}
+								onChange={(e) =>
+									setFormData({ ...formData, confirmPassword: e.target.value })
+								}
+								error={errors.confirmPassword}
+								variant="light"
+							/>
+							<button
+								type="button"
+								onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+								className="absolute right-3 top-[42px] text-neutral-400 hover:text-neutral-600"
+							>
+								{showConfirmPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
 
 						{errors.submit && (
 							<div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">

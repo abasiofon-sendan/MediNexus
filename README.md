@@ -39,6 +39,12 @@ Ideally, doctors would be verified through the Medical and Dental Council of Nig
 
 This is a known limitation that should be addressed in future iterations when budget allows for MDCN API integration.
 
+## NIN Verification
+
+NIN verification is optional during patient registration because the Interswitch API is currently unstable and returns errors frequently. Users can still register with their NIN without verification. If verification succeeds, the form auto-fills with the user's details from the national database.
+
+This is a temporary measure until the Interswitch API issues are resolved.
+
 ## Tech Stack
 
 - **Frontend**: React with TypeScript, TanStack Query, Tailwind CSS

@@ -112,13 +112,17 @@ def get_interswitch_token() -> str:
 
 
 
-def send_otp_email(email: str) -> dict:
+def send_otp_email(email: str, purpose: str = 'verification') -> dict:
     from .models import OTPToken
 
     code = generate_otp()
     OTPToken.objects.create(email=email.lower(), code=code)
 
-    subject = 'Your MediNexus Verification Code'
+    if purpose == 'password_reset':
+        subject = 'Your MediNexus Password Reset Code'
+    else:
+        subject = 'Your MediNexus Verification Code'
+    
     from_email = settings.DEFAULT_FROM_EMAIL
     
     # Render the HTML template

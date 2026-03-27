@@ -8,6 +8,8 @@ from .views import (
     OTPVerifyView,
     GetNINFullDetailsView,
     InterswitchAuthView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 
 urlpatterns = [
@@ -18,4 +20,6 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('nin/interswitch/auth/', InterswitchAuthView.as_view(), name='interswitch-auth'),
     path('nin/full-details/', GetNINFullDetailsView.as_view(), name='get-nin-full-details'),
+    path('password/reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 ]

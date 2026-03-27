@@ -7,6 +7,8 @@ import {
 	Dna,
 	Drop,
 	EnvelopeSimple,
+	Eye,
+	EyeSlash,
 	FirstAidKit,
 	IdentificationCard,
 	Lock,
@@ -192,6 +194,8 @@ function PatientRegister() {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [registeredEmail, setRegisteredEmail] = useState("");
 	const [showResumeMessage, setShowResumeMessage] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	// Load data from localStorage on component mount and URL changes
 	useEffect(() => {
@@ -374,7 +378,7 @@ function PatientRegister() {
 				// Generic 400 error - likely NIN verification issue
 				else if (error.response?.status === 400) {
 					newErrors.submit =
-						"NIN verification failed. Please ensure your name and date of birth match your National ID records exactly.";
+						"NIN verification failed. Please try again.";
 				} else {
 					newErrors.submit = "Registration failed. Please try again.";
 				}
@@ -433,10 +437,7 @@ function PatientRegister() {
 		} else if (!isValidNIN(ninData.nin)) {
 			newErrors.nin = "NIN must be exactly 11 digits";
 		}
-		// TEMPORARILY REMOVED: NIN verification requirement for testing
-		// } else if (!ninData.isVerified) {
-		// 	newErrors.nin = "Please verify your NIN before proceeding";
-		// }
+		// NIN verification is optional - patients can register without verification
 
 		// Show token or verification errors
 		if (tokenError) {
@@ -479,8 +480,8 @@ function PatientRegister() {
 	const validateStepTwo = () => {
 		const newErrors: Record<string, string> = {};
 
-		if (!stepTwoData.date_of_birth)
-			newErrors.date_of_birth = "Date of birth is required";
+		// Date of birth is optional since NIN verification is optional
+		// Users can manually enter DOB or skip it
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -567,7 +568,7 @@ function PatientRegister() {
 									Verify Your Identity
 								</h1>
 								<p className="text-neutral-600">
-									Enter your NIN to get started. Verification is temporarily disabled for testing - you can proceed without verification.
+									Enter your NIN to get started.
 								</p>
 							</div>
 
@@ -604,17 +605,6 @@ function PatientRegister() {
 												className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400"
 											/>
 										)}
-									</div>
-
-									{/* Test NIPs Helper - TEMPORARY */}
-									<div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-										<p className="text-sm text-amber-800 flex items-start gap-2">
-											<Warning size={16} weight="bold" className="mt-0.5 flex-shrink-0" />
-											<span>
-												<strong>TESTING MODE:</strong> NIN verification temporarily disabled. 
-												Enter any 11-digit NIN and click "Continue" to proceed without verification.
-											</span>
-										</p>
 									</div>
 
 									{/* Verify NIN Button */}
@@ -874,31 +864,49 @@ function PatientRegister() {
 								variant="light"
 							/>
 
-							<Input
-								label="Password"
-								type="password"
-								icon={<Lock size={18} />}
-								placeholder="••••••••"
-								value={stepOneData.password}
-								onChange={(e) =>
-									handleStepOneChange("password", e.target.value)
-								}
-								error={errors.password}
-								variant="light"
-							/>
+							<div className="relative">
+								<Input
+									label="Password"
+									type={showPassword ? "text" : "password"}
+									icon={<Lock size={18} />}
+									placeholder="••••••••"
+									value={stepOneData.password}
+									onChange={(e) =>
+										handleStepOneChange("password", e.target.value)
+									}
+									error={errors.password}
+									variant="light"
+								/>
+								<button
+									type="button"
+									onClick={() => setShowPassword(!showPassword)}
+									className="absolute right-3 top-[42px] text-neutral-400 hover:text-neutral-600"
+								>
+									{showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+								</button>
+							</div>
 
-							<Input
-								label="Confirm Password"
-								type="password"
-								icon={<Lock size={18} />}
-								placeholder="••••••••"
-								value={stepOneData.confirmPassword}
-								onChange={(e) =>
-									handleStepOneChange("confirmPassword", e.target.value)
-								}
-								error={errors.confirmPassword}
-								variant="light"
-							/>
+							<div className="relative">
+								<Input
+									label="Confirm Password"
+									type={showConfirmPassword ? "text" : "password"}
+									icon={<Lock size={18} />}
+									placeholder="••••••••"
+									value={stepOneData.confirmPassword}
+									onChange={(e) =>
+										handleStepOneChange("confirmPassword", e.target.value)
+									}
+									error={errors.confirmPassword}
+									variant="light"
+								/>
+								<button
+									type="button"
+									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+									className="absolute right-3 top-[42px] text-neutral-400 hover:text-neutral-600"
+								>
+									{showConfirmPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+								</button>
+							</div>
 
 							<div className="flex gap-3">
 								<Button
@@ -935,19 +943,7 @@ function PatientRegister() {
 								</p>
 							</div>
 
-							<div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
-								<p className="text-sm text-amber-800 flex items-start gap-2">
-									<ShieldCheck
-										size={16}
-										weight="bold"
-										className="mt-0.5 flex-shrink-0"
-									/>
-									<span>
-										Your date of birth must match your NIN records exactly for
-										verification to succeed.
-									</span>
-								</p>
-							</div>
+
 
 							<div>
 								<Input

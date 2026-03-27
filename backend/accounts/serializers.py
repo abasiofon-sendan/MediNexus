@@ -142,3 +142,29 @@ class OTPVerifySerializer(serializers.Serializer):
         min_length=6,
         help_text='6-digit OTP code sent to the email (expires in 10 minutes).'
     )
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for requesting password reset OTP."""
+    
+    email = serializers.EmailField(
+        help_text='Email address of the account to reset.'
+    )
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for confirming password reset with OTP."""
+    
+    email = serializers.EmailField(
+        help_text='Email address that received the OTP.'
+    )
+    otp_code = serializers.CharField(
+        max_length=6, 
+        min_length=6,
+        help_text='6-digit OTP code sent to the email.'
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text='New password (at least 8 characters).'
+    )

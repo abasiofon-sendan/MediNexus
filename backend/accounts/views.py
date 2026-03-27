@@ -17,6 +17,8 @@ from .serializers import (
     LoginSerializer,
     OTPSendSerializer,
     OTPVerifySerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 from .services import verify_nin, send_otp_email, verify_otp_email, get_nin_full_details, get_interswitch_token
 
@@ -155,6 +157,8 @@ class LoginView(APIView):
                 'refresh': tokens['refresh'],
                 'user_type': user.user_type,
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'email_verified': user.email_verified,
             },
             status=status.HTTP_200_OK,
@@ -427,3 +431,117 @@ class GetNINFullDetailsView(APIView):
                 {'success': False, 'error': f'Failed to fetch NIN details: {str(exc)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class PasswordResetRequestView(APIView):
+    """Request password reset OTP via email."""
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Request password reset',
+        description='Sends a 6-digit OTP to the user\'s email for password reset.',
+        request=PasswordResetRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                description='OTP sent successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success',
+                        value={'message': 'A password reset OTP has been sent to your email.'},
+                    )
+                ],
+            ),
+            404: OpenApiResponse(description='Email not found'),
+        },
+    )
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email'].lower()
+        
+        # Check if user exists
+        if not User.objects.filter(email=email).exists():
+            # Don't reveal whether email exists
+            return Response(
+                {'message': 'A password reset OTP has been sent to your email.'},
+                status=status.HTTP_200_OK,
+            )
+
+        # Send OTP for password reset
+        result = send_otp_email(email, purpose='password_reset')
+        
+        if not result['sent']:
+            logger.error('Password reset OTP failed for %s: %s', email, result.get('error'))
+            return Response(
+                {'error': 'Failed to send OTP email. Please try again later.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        logger.info('Password reset OTP sent to: %s', email)
+        return Response(
+            {'message': 'A password reset OTP has been sent to your email.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """Verify OTP and reset password."""
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Reset password with OTP',
+        description='Verifies the OTP and sets a new password for the user.',
+        request=PasswordResetConfirmSerializer,
+        responses={
+            200: OpenApiResponse(
+                description='Password reset successfully',
+                examples=[
+                    OpenApiExample(
+                        'Success',
+                        value={'message': 'Password reset successfully. You can now login with your new password.'},
+                    )
+                ],
+            ),
+            400: OpenApiResponse(description='Invalid or expired OTP'),
+            404: OpenApiResponse(description='User not found'),
+        },
+    )
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email'].lower()
+        otp_code = serializer.validated_data['otp_code']
+        new_password = serializer.validated_data['new_password']
+
+        # Find user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'Invalid OTP or user not found.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Verify OTP
+        result = verify_otp_email(email, otp_code)
+        if not result['verified']:
+            return Response(
+                {'error': result.get('error', 'Invalid or expired OTP.')},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        logger.info('Password reset successfully for user: %s', email)
+
+        return Response(
+            {'message': 'Password reset successfully. You can now login with your new password.'},
+            status=status.HTTP_200_OK,
+        )

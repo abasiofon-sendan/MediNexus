@@ -13,24 +13,11 @@ import type {
 
 export const recordsService = {
   /**
-   * Get all records for the authenticated patient using patient_email
-   * Backend endpoint: /records/patient/{patient_email}/
+   * Get all records for the authenticated patient
+   * Backend filters by authenticated user automatically
    */
   getMyRecords: async (): Promise<HealthRecordDetail[]> => {
-    // Get patient email from auth state or localStorage
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      throw new Error('User not authenticated');
-    }
-    
-    const user = JSON.parse(userStr);
-    const patientEmail = user.email;
-    
-    if (!patientEmail) {
-      throw new Error('Patient email not available');
-    }
-    
-    const response = await client.get<HealthRecordDetail[]>(ENDPOINTS.RECORDS.PATIENT_RECORDS(patientEmail));
+    const response = await client.get<HealthRecordDetail[]>(ENDPOINTS.RECORDS.LIST);
     return response.data;
   },
 

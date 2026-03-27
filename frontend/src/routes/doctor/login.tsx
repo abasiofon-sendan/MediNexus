@@ -2,12 +2,14 @@ import {
 	ArrowRight,
 	Clock,
 	EnvelopeSimple,
+	Eye,
+	EyeSlash,
 	Hospital,
 	Lock,
 	ShieldCheck,
 } from "@phosphor-icons/react";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -24,16 +26,18 @@ function DoctorLogin() {
 		email: "",
 		password: "",
 	});
+	const [showPassword, setShowPassword] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	const 	loginMutation = useMutation({
+		mutationKey: ["doctor-login"],
 		mutationFn: authService.login,
 		onSuccess: (data) => {
 			const user = {
 				id: "",
 				email: data.email,
-				first_name: data.email.split("@")[0],
-				last_name: "",
+				first_name: data.first_name || data.email.split("@")[0],
+				last_name: data.last_name || "",
 				role: "doctor" as const,
 			};
 
@@ -103,9 +107,10 @@ function DoctorLogin() {
 								variant="light"
 							/>
 
+						<div className="relative">
 							<Input
 								label="Password"
-								type="password"
+								type={showPassword ? "text" : "password"}
 								icon={<Lock size={18} />}
 								placeholder="••••••••"
 								value={formData.password}
@@ -115,6 +120,14 @@ function DoctorLogin() {
 								error={errors.password}
 								variant="light"
 							/>
+							<button
+								type="button"
+								onClick={() => setShowPassword(!showPassword)}
+								className="absolute right-3 top-[42px] text-neutral-400 hover:text-neutral-600"
+							>
+								{showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
 
 							<div className="flex items-center justify-between">
 								<label className="flex items-center gap-2 cursor-pointer">
@@ -124,12 +137,13 @@ function DoctorLogin() {
 									/>
 									<span className="text-sm text-neutral-600">Remember me</span>
 								</label>
-								<button
-									type="button"
+								<Link
+									to="/forgot-password"
 									className="text-sm text-primary hover:underline font-medium"
 								>
 									Forgot password?
-								</button>
+								</Link>
+
 							</div>
 
 							{errors.submit && (

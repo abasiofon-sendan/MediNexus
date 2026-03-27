@@ -1,5 +1,20 @@
 import axios from "axios";
-import { API_BASE_URL } from "../ENDPOINTS";
+import { API_BASE_URL, ENDPOINTS } from "../ENDPOINTS";
+
+// Track if we're currently refreshing to prevent multiple refresh calls
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = [];
+
+const processQueue = (error: unknown | null) => {
+	failedQueue.forEach((prom) => {
+		if (error) {
+			prom.reject(error);
+		} else {
+			prom.resolve(undefined);
+		}
+	});
+	failedQueue = [];
+};
 
 // Create axios instance
 const client = axios.create({
@@ -29,13 +44,54 @@ client.interceptors.response.use(
 	(response) => {
 		return response;
 	},
-	(error) => {
-		if (error.response?.status === 401) {
-			// Clear token and redirect to login if unauthorized
-			localStorage.removeItem("access_token");
-			localStorage.removeItem("refresh_token");
-			window.location.href = "/login";
+	async (error) => {
+		const originalRequest = error.config;
+
+		if (error.response?.status === 401 && !originalRequest._retry) {
+			if (isRefreshing) {
+				return new Promise((resolve, reject) => {
+					failedQueue.push({ resolve, reject });
+				})
+					.then(() => client(originalRequest))
+					.catch((err) => Promise.reject(err));
+			}
+
+			originalRequest._retry = true;
+			isRefreshing = true;
+
+			const refreshToken = localStorage.getItem("refresh_token");
+
+			if (!refreshToken) {
+				localStorage.removeItem("access_token");
+				localStorage.removeItem("refresh_token");
+				window.location.href = "/login";
+				return Promise.reject(error);
+			}
+
+			try {
+				const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.AUTH.TOKEN_REFRESH}`, {
+					refresh: refreshToken,
+				});
+
+				const { access } = response.data;
+				localStorage.setItem("access_token", access);
+
+				processQueue(null);
+				isRefreshing = false;
+
+				originalRequest.headers.Authorization = `Bearer ${access}`;
+				return client(originalRequest);
+			} catch (refreshError) {
+				processQueue(refreshError);
+				isRefreshing = false;
+
+				localStorage.removeItem("access_token");
+				localStorage.removeItem("refresh_token");
+				window.location.href = "/login";
+				return Promise.reject(refreshError);
+			}
 		}
+
 		return Promise.reject(error);
 	},
 );

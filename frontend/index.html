@@ -33,7 +33,20 @@
     </script>
   </head>
   <body class="antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
+    <!-- Preloader -->
+    <div id="preloader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9999;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+            <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#4fb8b2;border-radius:50%;animation:spin 1s linear infinite;"></div>
+            <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:600;color:#374151;">MediNexus</span>
+        </div>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.addEventListener('load', function() {
+        document.getElementById('preloader').style.display = 'none';
+      });
+    </script>
   </body>
 </html>
