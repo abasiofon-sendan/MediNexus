@@ -4,37 +4,16 @@ from .models import AuditLog
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = [
-        'action',
-        'user',
-        'timestamp',
-        'content_type',
-        'description',
-    ]
-    list_filter = ['action', 'timestamp', 'content_type']
-    search_fields = ['description', 'user__email', 'metadata']
-    readonly_fields = ['id', 'timestamp', 'user', 'content_object']
-    
-    fieldsets = (
-        ('Audit Information', {
-            'fields': ('id', 'user', 'action', 'timestamp')
-        }),
-        ('Related Object', {
-            'fields': ('content_type', 'object_id', 'content_object')
-        }),
-        ('Details', {
-            'fields': ('description', 'metadata')
-        }),
-    )
-
-    def get_readonly_fields(self, request, obj=None):
-        # All fields are readonly for audit logs
-        return self.readonly_fields
+    list_display = ['action', 'actor', 'actor_type', 'patient', 'nin_authorized', 'timestamp']
+    list_filter = ['action', 'actor_type', 'nin_authorized']
+    search_fields = ['actor__email', 'patient__email', 'description']
+    readonly_fields = [f.name for f in AuditLog._meta.get_fields()]
 
     def has_add_permission(self, request):
-        # Audit logs are only created programmatically
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        # Prevent deletion of audit logs for compliance
         return False

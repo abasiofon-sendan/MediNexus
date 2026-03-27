@@ -1,50 +1,61 @@
 import uuid
 from django.db import models
-from accounts.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 
 
 class AuditLog(models.Model):
-    """
-    Generic audit logging for record approvals and changes
-    """
-    ACTION_TYPES = [
-        ('CREATE', 'Create'),
-        ('VIEW', 'View'),
-        ('APPROVE', 'Approve'),
-        ('REJECT', 'Reject'),
-        ('UPDATE', 'Update'),
-        ('DELETE', 'Delete'),
-        ('OTP_SENT', 'OTP Sent'),
-        ('OTP_VERIFIED', 'OTP Verified'),
+    ACTION_CHOICES = [
+        ('READ',             'Read'),
+        ('WRITE_REQUEST',    'Write Request'),
+        ('WRITE_APPROVED',   'Write Approved'),
+        ('WRITE_REJECTED',   'Write Rejected'),
+        ('CONSENT_GRANTED',  'Consent Granted'),
+        ('CONSENT_REVOKED',  'Consent Revoked'),
+    ]
+
+    ACTOR_TYPE_CHOICES = [
+        ('PATIENT',  'Patient'),
+        ('PROVIDER', 'Provider'),
+        ('ADMIN',    'Admin'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
-    # Actor and timestamp
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='audit_logs')
-    action = models.CharField(max_length=20, choices=ACTION_TYPES)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    
-    # Generic relation for any object
-    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True)
-    object_id = models.UUIDField(null=True)
-    content_object = GenericForeignKey('content_type', 'object_id')
-    
-    # Additional details
-    description = models.TextField(blank=True)
-    metadata = models.JSONField(default=dict, blank=True)  # Store any extra data
+
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_actions'
+    )
+    actor_type = models.CharField(max_length=10, choices=ACTOR_TYPE_CHOICES, null=True, blank=True)
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_subject'
+    )
+    record = models.ForeignKey(
+        'records.HealthRecord',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs'
+    )
+    description = models.TextField(null=True, blank=True)
+    nin_authorized = models.BooleanField(default=False, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Audit Log'
         verbose_name_plural = 'Audit Logs'
         ordering = ['-timestamp']
-        indexes = [
-            models.Index(fields=['user', '-timestamp']),
-            models.Index(fields=['action', '-timestamp']),
-            models.Index(fields=['content_type', 'object_id']),
-        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and AuditLog.objects.filter(pk=self.pk).exists():
+            raise PermissionError('AuditLog entries are immutable and cannot be edited.')
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.action} by {self.user.email} on {self.timestamp.strftime("%Y-%m-%d %H:%M")}'
+        return f'[{self.timestamp:%Y-%m-%d %H:%M}] {self.action} by {self.actor}'
