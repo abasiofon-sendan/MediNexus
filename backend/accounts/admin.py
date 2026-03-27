@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, PatientProfile
+from .models import User, PatientProfile, OTPToken
 
 
 @admin.register(User)
@@ -35,3 +35,27 @@ class PatientProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'blood_group', 'genotype', 'date_of_birth')
     search_fields = ('user__email', 'user__nin')
     raw_id_fields = ('user',)
+
+
+@admin.register(OTPToken)
+class OTPTokenAdmin(admin.ModelAdmin):
+    list_display = ['email', 'is_used', 'created_at', 'expires_at']
+    list_filter = ['is_used', 'created_at']
+    search_fields = ['email', 'code']
+    readonly_fields = ['id', 'created_at', 'expires_at']
+
+    fieldsets = (
+        ('OTP Information', {
+            'fields': ('id', 'email', 'code')
+        }),
+        ('Status', {
+            'fields': ('is_used',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'expires_at')
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # OTPs are only created programmatically
+        return False
