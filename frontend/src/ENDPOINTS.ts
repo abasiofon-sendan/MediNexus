@@ -13,11 +13,41 @@ export const AUTH_ENDPOINTS = {
 
 export const PROVIDER_ENDPOINTS = {
 	HOSPITALS: "/providers/hospitals/",
+	DOCTORS: "/providers/doctors/",
+	DOCTOR_BY_HOSPITAL: (hospitalId: string) => `/providers/doctors/?hospital_id=${hospitalId}`,
+} as const;
+
+export const RECORD_ENDPOINTS = {
+	// Patient endpoints (to be added by backend)
+	MY_RECORDS: "/records/my-records/",
+	MY_PENDING_RECORDS: "/records/my-pending-records/",
+	
+	// Existing endpoints
+	LIST_BY_NIN: (nin: string) => `/records/list/${nin}/`,
+	CREATE: "/records/create/",
+	APPROVE: (id: string) => `/records/${id}/approve/`,
+	REJECT: (id: string) => `/records/${id}/reject/`,
+} as const;
+
+export const CONSENT_ENDPOINTS = {
+	// Patient endpoints (to be added by backend)
+	MY_CONSENTS: "/consents/my-consents/",
+	
+	// Existing endpoints
+	GRANT: "/consents/grant/",
+	REVOKE: "/consents/revoke/",
+} as const;
+
+export const AUDIT_ENDPOINTS = {
+	MY_LOGS: "/audit/my-logs/",
 } as const;
 
 export const ENDPOINTS = {
 	AUTH: AUTH_ENDPOINTS,
 	PROVIDERS: PROVIDER_ENDPOINTS,
+	RECORDS: RECORD_ENDPOINTS,
+	CONSENTS: CONSENT_ENDPOINTS,
+	AUDIT: AUDIT_ENDPOINTS,
 } as const;
 
 // Utility function to build full URL
