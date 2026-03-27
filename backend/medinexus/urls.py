@@ -16,9 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
+def health_check(request):
+    """Simple endpoint to verify the server is running."""
+    return JsonResponse({"status": "healthy", "message": "MediNexus API is running smoothly!"}, status=200)
+
 urlpatterns = [
+    # Health check endpoints
+    path('', health_check, name='index-health'),
+    path('api/health/', health_check, name='api-health'),
+
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/providers/', include('providers.urls')),
