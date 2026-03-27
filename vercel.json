@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "medinexus/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "medinexus/wsgi.py"
+    }
+  ]
+}
