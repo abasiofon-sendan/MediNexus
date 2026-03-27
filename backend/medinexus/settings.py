@@ -219,7 +219,11 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() == 'true'
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    'https://medi-nexus-b6fo.vercel.app',
+    'http://localhost:3000',
+]
 
 
 
@@ -257,4 +261,10 @@ ANYMAIL = {
     "BREVO_API_KEY": os.environ.get("BREVO_API_KEY"),
 }
 
-ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1', 'medinexus-dad0.onrender.com']
+ALLOWED_HOSTS = [
+    '.vercel.app',
+    'medi-nexus-b6fo.vercel.app',
+    'localhost',
+    '127.0.0.1',
+    'medinexus-dad0.onrender.com',
+]
