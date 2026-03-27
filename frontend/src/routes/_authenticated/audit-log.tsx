@@ -17,6 +17,13 @@ import { auditService, formatAuditLogForDisplay, getAuditLogFilters, downloadAud
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type { AuditAction, ActorType } from "#/types/api.types";
 
 export const Route = createFileRoute("/_authenticated/audit-log")({
@@ -89,34 +96,36 @@ function PatientAuditLog() {
 
 					{/* Action Filter */}
 					<div className="w-full lg:w-48">
-						<select
-							value={actionFilter}
-							onChange={(e) => setActionFilter(e.target.value as any)}
-							className="w-full h-12 px-3 border border-neutral-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-						>
-							<option value="all">All Actions</option>
-							{filters.actions.map((action) => (
-								<option key={action.value} value={action.value}>
-									{action.label}
-								</option>
-							))}
-						</select>
+						<Select value={actionFilter} onValueChange={(value) => setActionFilter(value as any)}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="All Actions" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Actions</SelectItem>
+								{filters.actions.map((action) => (
+									<SelectItem key={action.value} value={action.value}>
+										{action.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					{/* Actor Type Filter */}
 					<div className="w-full lg:w-48">
-						<select
-							value={actorFilter}
-							onChange={(e) => setActorFilter(e.target.value as any)}
-							className="w-full h-12 px-3 border border-neutral-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-						>
-							<option value="all">All Actors</option>
-							{filters.actorTypes.map((actor) => (
-								<option key={actor.value} value={actor.value}>
-									{actor.label}
-								</option>
-							))}
-						</select>
+						<Select value={actorFilter} onValueChange={(value) => setActorFilter(value as any)}>
+							<SelectTrigger className="w-full">
+								<SelectValue placeholder="All Actors" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All Actors</SelectItem>
+								{filters.actorTypes.map((actor) => (
+									<SelectItem key={actor.value} value={actor.value}>
+										{actor.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					{/* Action Buttons */}
