@@ -43,18 +43,35 @@ class HealthRecordSerializer(serializers.ModelSerializer):
 class HealthRecordCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating new health records"""
     
+    # We will accept an email address rather than a raw UUID
+    patient_email = serializers.EmailField(write_only=True)
+    
     class Meta:
         model = HealthRecord
         fields = [
-            'patient',
+            'patient_email',
             'record_type',
             'title',
             'description',
         ]
+        
+    def validate_patient_email(self, value):
+        from accounts.models import User
+        try:
+            # Find the patient by email
+            user = User.objects.get(email=value.lower(), user_type='PATIENT')
+            return user
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No patient found with this email.")
 
     def create(self, validated_data):
-        # Doctor is set from the request user
+        # The validated patient_email is now actually the User object!
+        patient = validated_data.pop('patient_email')
+        
+        # Doctor is set from the request user 
         validated_data['doctor'] = self.context['request'].user
+        validated_data['patient'] = patient
+        
         return super().create(validated_data)
 
 
