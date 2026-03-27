@@ -4,20 +4,49 @@ from .models import User, PatientProfile
 
 
 class PatientRegisterSerializer(serializers.ModelSerializer):
-    """Serializer for patient self-registration."""
+    """Serializer for patient self-registration with NIN verification."""
 
-    password = serializers.CharField(write_only=True, min_length=8)
-    date_of_birth = serializers.DateField(required=False, allow_null=True)
+    password = serializers.CharField(
+        write_only=True, 
+        min_length=8,
+        help_text='At least 8 characters. Will be securely hashed.',
+    )
+    date_of_birth = serializers.DateField(
+        required=False, 
+        allow_null=True,
+        help_text='Format: YYYY-MM-DD. Must match NIN record exactly.',
+    )
     blood_group = serializers.ChoiceField(
-        choices=PatientProfile.BLOOD_GROUP_CHOICES, required=False, default='UNKNOWN'
+        choices=PatientProfile.BLOOD_GROUP_CHOICES, 
+        required=False, 
+        default='UNKNOWN',
+        help_text='Patient blood group type.',
     )
     genotype = serializers.ChoiceField(
-        choices=PatientProfile.GENOTYPE_CHOICES, required=False, default='UNKNOWN'
+        choices=PatientProfile.GENOTYPE_CHOICES, 
+        required=False, 
+        default='UNKNOWN',
+        help_text='Patient genotype.',
     )
-    allergies = serializers.CharField(required=False, default='', allow_blank=True)
-    emergency_contact = serializers.CharField(required=False, default='', allow_blank=True)
+    allergies = serializers.CharField(
+        required=False, 
+        default='', 
+        allow_blank=True,
+        help_text='Comma-separated list of known allergies.',
+    )
+    emergency_contact = serializers.CharField(
+        required=False, 
+        default='', 
+        allow_blank=True,
+        help_text='Emergency contact phone number or name.',
+    )
 
     class Meta:
+        """
+        Serializes User and PatientProfile data for patient registration.
+        Required fields: email, password, first_name, last_name, phone_number, nin.
+        Optional fields: date_of_birth, blood_group, genotype, allergies, emergency_contact.
+        """
         model = User
         fields = [
             'email',
@@ -70,8 +99,15 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    """Serializer for patient login with email and password."""
+    
+    email = serializers.EmailField(
+        help_text='Registered email address.'
+    )
+    password = serializers.CharField(
+        write_only=True,
+        help_text='Account password.'
+    )
 
     def validate(self, attrs):
         email = attrs.get('email', '').lower()
@@ -88,9 +124,21 @@ class LoginSerializer(serializers.Serializer):
 
 
 class OTPSendSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    """Serializer for requesting OTP resend to email."""
+    
+    email = serializers.EmailField(
+        help_text='Email address to send 6-digit OTP to. Must be registered.'
+    )
 
 
 class OTPVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp_code = serializers.CharField(max_length=6, min_length=6)
+    """Serializer for verifying OTP code and obtaining JWT tokens."""
+    
+    email = serializers.EmailField(
+        help_text='Email address that received the OTP.'
+    )
+    otp_code = serializers.CharField(
+        max_length=6, 
+        min_length=6,
+        help_text='6-digit OTP code sent to the email (expires in 10 minutes).'
+    )

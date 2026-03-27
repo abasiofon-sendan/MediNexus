@@ -1,5 +1,7 @@
 from django.urls import path
+from .views import GrantConsentView, RevokeConsentView
 
-url_patterns = [
-    
+urlpatterns = [
+    path('grant/', GrantConsentView.as_view(), name='consent-grant'),
+    path('revoke/', RevokeConsentView.as_view(), name='consent-revoke'),
 ]

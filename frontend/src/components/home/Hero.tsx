@@ -1,7 +1,11 @@
-import { Button } from "../ui/button";
-import { Link } from "@tanstack/react-router";
-import { CheckCircleIcon, ShieldCheckIcon, StethoscopeIcon } from "@phosphor-icons/react";
+import {
+	CheckCircleIcon,
+	ShieldCheckIcon,
+	StethoscopeIcon,
+} from "@phosphor-icons/react";
 import { DeviceMobileIcon } from "@phosphor-icons/react/dist/ssr";
+import { Link } from "@tanstack/react-router";
+import { Button } from "../ui/button";
 
 const Hero = () => {
 	return (
@@ -30,7 +34,7 @@ const Hero = () => {
 
 						{/* CTAs */}
 						<div className="mt-10 flex flex-col sm:flex-row gap-3 [animation:fade-in_600ms_ease-out_400ms_both]">
-							<Link to="/auth/register" className="w-full sm:w-auto">
+							<Link to="/register" className="w-full sm:w-auto">
 								<Button
 									size="lg"
 									variant="secondary"
@@ -40,7 +44,7 @@ const Hero = () => {
 									Enter as Patient
 								</Button>
 							</Link>
-							<Link to="/auth/register" className="w-full sm:w-auto">
+							<Link to="/doctor/register" className="w-full sm:w-auto">
 								<Button
 									size="lg"
 									variant="outline"
